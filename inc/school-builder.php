@@ -177,7 +177,7 @@ function tsa_store_builder_page(): void {
 
     $result = null;
     $form   = [
-        'name' => '', 'slug' => '', 'mascot' => '', 'level' => 'High Schools',
+        'name' => '', 'slug' => '', 'type' => 'school', 'mascot' => '', 'level' => 'High Schools',
         'status' => 'coming-soon', 'spotlight' => 0,
         'primary' => '', 'secondary' => '', 'logo_id' => 0, 'tagline' => '',
         'ticker' => '',
@@ -238,21 +238,26 @@ function tsa_store_builder_page(): void {
 
         <form method="post" style="max-width:920px;margin-top:14px">
             <?php wp_nonce_field( 'tsa_sb_build', 'tsa_sb_nonce' ); ?>
-            <input type="hidden" name="tsa_store_type" value="school">
 
             <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:start">
 
                 <div>
                     <h2 class="title" style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#555">Identity</h2>
                     <table class="form-table"><tbody>
-                        <tr><th><label for="tsa_sb_name">School name</label></th>
+                        <tr><th><label for="tsa_sb_type">Store type</label></th>
+                            <td><select name="tsa_sb_type" id="tsa_sb_type">
+                                <?php foreach ( tsa_sb_type_choices() as $tk => $tl ) : ?>
+                                <option value="<?php echo esc_attr( $tk ); ?>" <?php selected( $form['type'], $tk ); ?>><?php echo esc_html( $tl ); ?></option>
+                                <?php endforeach; ?>
+                            </select></td></tr>
+                        <tr><th><label for="tsa_sb_name">Name</label></th>
                             <td><input name="tsa_sb_name" id="tsa_sb_name" type="text" class="regular-text" value="<?php echo esc_attr( $form['name'] ); ?>" placeholder="Dutchtown High School" required></td></tr>
                         <tr><th><label for="tsa_sb_slug">Slug</label></th>
                             <td><input name="tsa_sb_slug" id="tsa_sb_slug" type="text" class="regular-text" value="<?php echo esc_attr( $form['slug'] ); ?>" placeholder="dutchtown">
                             <p class="description">Auto-filled from the name. Used for the store, design scope, and <code>/schools/&lt;slug&gt;/</code>.</p></td></tr>
-                        <tr><th><label for="tsa_sb_mascot">Mascot</label></th>
+                        <tr data-school-only="1"><th><label for="tsa_sb_mascot">Mascot</label></th>
                             <td><input name="tsa_sb_mascot" id="tsa_sb_mascot" type="text" class="regular-text" value="<?php echo esc_attr( $form['mascot'] ); ?>" placeholder="Griffins"></td></tr>
-                        <tr><th><label for="tsa_sb_level">Level</label></th>
+                        <tr data-school-only="1"><th><label for="tsa_sb_level">Level</label></th>
                             <td><select name="tsa_sb_level" id="tsa_sb_level">
                                 <?php foreach ( $levels as $lv ) : ?>
                                 <option value="<?php echo esc_attr( $lv ); ?>" <?php selected( $form['level'], $lv ); ?>><?php echo esc_html( $lv ); ?></option>
@@ -291,6 +296,7 @@ function tsa_store_builder_page(): void {
                             </td></tr>
                     </tbody></table>
 
+                    <div data-school-only="1">
                     <h2 class="title" style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#555">Delivery &amp; contact</h2>
                     <table class="form-table"><tbody>
                         <tr><th><label for="tsa_sb_pickups">Pickup location(s)</label></th>
@@ -302,7 +308,9 @@ function tsa_store_builder_page(): void {
                             <td><input name="tsa_sb_email" id="tsa_sb_email" type="email" class="regular-text" value="<?php echo esc_attr( $form['contact_email'] ); ?>" placeholder="coach@school.org">
                             <p class="description">Optional. Used later for fundraiser/notification routing.</p></td></tr>
                     </tbody></table>
+                    </div>
 
+                    <div data-school-only="1">
                     <h2 class="title" style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#555">Programs <span style="text-transform:none;font-weight:400;color:#888">(optional — Band, Football, Color Guard…)</span></h2>
                     <p class="description" style="margin:0 0 8px">Each program becomes a design category for this school and a card on the programs hub. Live programs link to the school's designs filtered to that program.</p>
                     <table class="widefat" id="tsa-sb-programs" style="max-width:560px;margin-bottom:8px"><tbody>
@@ -320,6 +328,7 @@ function tsa_store_builder_page(): void {
                         <?php endforeach; ?>
                     </tbody></table>
                     <button type="button" class="button button-small" id="tsa-sb-add-prog">+ Add program</button>
+                    </div>
 
                     <p class="submit">
                         <button type="submit" name="tsa_sb_submit" value="build" class="button button-primary button-hero">🏫 Build school store</button>
@@ -403,6 +412,17 @@ function tsa_store_builder_page(): void {
         [mascot,tagline,status,slug,prim,sec].forEach(function(el){ el && el.addEventListener('input', paint); });
         paint();
 
+        // Store type — show/hide school-only sections.
+        var typeSel = document.getElementById('tsa_sb_type');
+        function syncType(){
+            var isSchool = !typeSel || typeSel.value === 'school';
+            document.querySelectorAll('[data-school-only]').forEach(function(el){
+                el.style.display = isSchool ? '' : 'none';
+            });
+        }
+        if (typeSel) typeSel.addEventListener('change', syncType);
+        syncType();
+
         // Media logo picker
         var btn = document.getElementById('tsa_sb_logo_btn'),
             clr = document.getElementById('tsa_sb_logo_clear'),
@@ -458,9 +478,11 @@ function tsa_sb_read_form(): array {
     }
     $hex = function ( $v, $d ) { $v = sanitize_text_field( wp_unslash( $v ) ); return preg_match( '/^#[0-9a-fA-F]{6}$/', $v ) ? $v : $d; };
     $status = sanitize_key( $_POST['tsa_sb_status'] ?? 'coming-soon' );
+    $type   = sanitize_key( $_POST['tsa_sb_type'] ?? 'school' );
     return [
         'name'          => $name,
         'slug'          => $slug,
+        'type'          => array_key_exists( $type, tsa_sb_type_choices() ) ? $type : 'school',
         'mascot'        => sanitize_text_field( wp_unslash( $_POST['tsa_sb_mascot'] ?? '' ) ),
         'level'         => sanitize_text_field( wp_unslash( $_POST['tsa_sb_level'] ?? 'High Schools' ) ),
         'status'        => in_array( $status, [ 'live', 'coming-soon', 'hidden' ], true ) ? $status : 'coming-soon',
@@ -482,6 +504,7 @@ function tsa_sb_form_from_store( int $store_id ): array {
     return [
         'name'          => get_the_title( $store_id ),
         'slug'          => sanitize_title( get_post_meta( $store_id, '_ac_store_slug', true ) ?: get_post_field( 'post_name', $store_id ) ),
+        'type'          => get_post_meta( $store_id, '_tsa_store_type', true ) ?: 'school',
         'mascot'        => get_post_meta( $store_id, '_tsa_school_mascot', true ),
         'level'         => get_post_meta( $store_id, '_tsa_school_level', true ) ?: 'High Schools',
         'status'        => get_post_meta( $store_id, '_tsa_homepage_status', true ) ?: 'coming-soon',
@@ -543,8 +566,9 @@ function tsa_sb_build_school( array $f ): array {
     }
 
     update_post_meta( $store_id, '_ac_store_slug',        $slug );
-    update_post_meta( $store_id, '_tsa_store_type',       'school' );
-    update_post_meta( $store_id, '_ac_store_type',        'school' ); // keep both in sync
+    update_post_meta( $store_id, '_tsa_store_type',       $f['type'] );
+    update_post_meta( $store_id, '_ac_store_type',        $f['type'] ); // keep both in sync
+    update_post_meta( $store_id, '_ac_is_active',         tsa_sb_active_from_status( $f['status'] ) );
     update_post_meta( $store_id, '_tsa_homepage_status',  $f['status'] );
     update_post_meta( $store_id, '_tsa_is_spotlight',     $f['spotlight'] ? '1' : '0' );
     update_post_meta( $store_id, '_tsa_store_tagline',    $f['tagline'] );
