@@ -196,6 +196,18 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
     if ( $hook === 'toplevel_page_tsa-store-builder' ) wp_enqueue_media();
 } );
 
+/**
+ * Hide the native "Stores" post-type screen from the admin menu — the Store
+ * Builder is now the one entry point. This only removes the MENU ITEM (a
+ * theme-level admin_menu hook); it does NOT touch the plugin's CPT
+ * registration, so moneyoverbs.com (which runs the same plugin) is
+ * unaffected. The screen itself still works and is still reachable — see
+ * the "Manage apparel & drops" link in tsa_sb_render_existing().
+ */
+add_action( 'admin_menu', function () {
+    remove_submenu_page( 'apparel-configurator', 'edit.php?post_type=configurator_store' );
+}, 999 );
+
 /** Known Ascension brand-guide colors for the prefill helper (name → [primary, secondary]). */
 function tsa_sb_brand_guide_map(): array {
     return [
@@ -901,20 +913,21 @@ function tsa_sb_render_existing(): void {
     $records = tsa_all_store_records();
     echo '<hr style="margin:28px 0"><h2>All stores</h2>';
     if ( ! $records ) { echo '<p><em>None generated yet. The directory still shows the seeded list until you build stores here.</em></p>'; return; }
-    echo '<table class="widefat striped" style="max-width:920px"><thead><tr><th>Store</th><th>Type</th><th>Slug</th><th>Status</th><th>Store</th><th>Page</th></tr></thead><tbody>';
+    echo '<table class="widefat striped" style="max-width:920px"><thead><tr><th>Store</th><th>Type</th><th>Slug</th><th>Status</th><th>Store</th><th>Page</th><th>Apparel &amp; drops</th></tr></thead><tbody>';
     foreach ( $records as $r ) {
         $page = get_posts( [ 'post_type' => 'page', 'name' => $r['slug'], 'numberposts' => 1, 'post_status' => 'any' ] );
         $page_link = $page ? '<a href="' . esc_url( home_url( $r['url'] ) ) . '" target="_blank">view ↗</a>' : '—';
         $edit_link = admin_url( 'admin.php?page=tsa-store-builder&tsa_sb_edit=' . $r['post_id'] );
         printf(
-            '<tr><td><strong>%s</strong>%s</td><td>%s</td><td><code>%s</code></td><td>%s</td><td><a href="%s">edit</a></td><td>%s</td></tr>',
+            '<tr><td><strong>%s</strong>%s</td><td>%s</td><td><code>%s</code></td><td>%s</td><td><a href="%s">edit</a></td><td>%s</td><td><a href="%s">Manage →</a></td></tr>',
             esc_html( $r['name'] ),
             $r['mascot'] ? ' <span style="color:#888">· ' . esc_html( $r['mascot'] ) . '</span>' : '',
             esc_html( ucfirst( $r['type'] ) ),
             esc_html( $r['slug'] ),
             esc_html( $r['status'] ),
             esc_url( $edit_link ),
-            $page_link
+            $page_link,
+            esc_url( get_edit_post_link( $r['post_id'] ) )
         );
     }
     echo '</tbody></table>';
