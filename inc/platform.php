@@ -37,8 +37,8 @@ function tsa_feature_catalog(): array {
         'blank_catalog'       => [ 'name' => 'Blank Apparel Catalog',       'group' => 'Core',        'lifecycle' => 'ga' ],
 
         'stamp_school'        => [ 'name' => 'School Stores',               'group' => 'Store types', 'store_type' => 'school',   'lifecycle' => 'ga' ],
-        'stamp_team'          => [ 'name' => 'Team Stores',                 'group' => 'Store types', 'store_type' => 'team',     'lifecycle' => 'planned' ],
-        'stamp_business'      => [ 'name' => 'Business Stores',             'group' => 'Store types', 'store_type' => 'business', 'lifecycle' => 'planned' ],
+        'stamp_team'          => [ 'name' => 'Team Stores',                 'group' => 'Store types', 'store_type' => 'team',     'lifecycle' => 'ga' ],
+        'stamp_business'      => [ 'name' => 'Business Stores',             'group' => 'Store types', 'store_type' => 'business', 'lifecycle' => 'ga' ],
 
         'tee_parties'         => [ 'name' => 'Tee Parties (drops)',         'group' => 'Engage',      'lifecycle' => 'ga' ],
         'fundraising'         => [ 'name' => 'Fundraising',                 'group' => 'Monetize',    'requires' => [ 'design_library' ], 'lifecycle' => 'ga' ],
