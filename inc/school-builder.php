@@ -179,7 +179,7 @@ function tsa_store_builder_page(): void {
     $form   = [
         'name' => '', 'slug' => '', 'type' => 'school', 'mascot' => '', 'level' => 'High Schools',
         'status' => 'coming-soon', 'spotlight' => 0,
-        'primary' => '', 'secondary' => '', 'logo_id' => 0, 'tagline' => '',
+        'primary' => '', 'secondary' => '', 'logo_id' => 0, 'tagline' => '', 'description' => '',
         'ticker' => '',
         'pickups' => '', 'shipping' => 0, 'contact_email' => '',
         'programs' => [],
@@ -284,6 +284,9 @@ function tsa_store_builder_page(): void {
                             </td></tr>
                         <tr><th><label for="tsa_sb_tagline">Tagline</label></th>
                             <td><input name="tsa_sb_tagline" id="tsa_sb_tagline" type="text" class="regular-text" value="<?php echo esc_attr( $form['tagline'] ); ?>" placeholder="Home of the Griffins"></td></tr>
+                        <tr><th><label for="tsa_sb_description">Description</label></th>
+                            <td><textarea name="tsa_sb_description" id="tsa_sb_description" rows="3" class="large-text"><?php echo esc_textarea( $form['description'] ); ?></textarea>
+                            <p class="description">Internal note about this store — was previously only on the native Stores screen.</p></td></tr>
                         <tr><th><label for="tsa_sb_ticker">Ticker items</label></th>
                             <td><textarea name="tsa_sb_ticker" id="tsa_sb_ticker" rows="4" class="large-text code" placeholder="Official Merch&#10;Drops on Schedule&#10;Performance First"><?php echo esc_textarea( $form['ticker'] ); ?></textarea>
                             <p class="description">One phrase per line — scrolls across the homepage hero banner. Leave blank to use the default TSA ticker.</p></td></tr>
@@ -491,6 +494,7 @@ function tsa_sb_read_form(): array {
         'secondary'     => $hex( $_POST['tsa_sb_secondary'] ?? '', '#C7C9C8' ),
         'logo_id'       => absint( $_POST['tsa_sb_logo_id'] ?? 0 ),
         'tagline'       => sanitize_text_field( wp_unslash( $_POST['tsa_sb_tagline'] ?? '' ) ),
+        'description'   => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_description'] ?? '' ) ),
         'ticker'        => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_ticker'] ?? '' ) ),
         'pickups'       => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_pickups'] ?? '' ) ),
         'shipping'      => isset( $_POST['tsa_sb_shipping'] ) ? 1 : 0,
@@ -513,6 +517,7 @@ function tsa_sb_form_from_store( int $store_id ): array {
         'secondary'     => get_post_meta( $store_id, '_tsa_school_secondary', true ) ?: '#C7C9C8',
         'logo_id'       => (int) get_post_thumbnail_id( $store_id ),
         'tagline'       => get_post_meta( $store_id, '_tsa_store_tagline', true ),
+        'description'   => get_post_meta( $store_id, '_ac_store_description', true ),
         'ticker'        => get_post_meta( $store_id, '_tsa_school_ticker', true ),
         'pickups'       => get_post_meta( $store_id, '_tsa_school_pickups', true ),
         'shipping'      => get_post_meta( $store_id, '_tsa_school_shipping', true ) ? 1 : 0,
@@ -572,6 +577,7 @@ function tsa_sb_build_school( array $f ): array {
     update_post_meta( $store_id, '_tsa_homepage_status',  $f['status'] );
     update_post_meta( $store_id, '_tsa_is_spotlight',     $f['spotlight'] ? '1' : '0' );
     update_post_meta( $store_id, '_tsa_store_tagline',    $f['tagline'] );
+    update_post_meta( $store_id, '_ac_store_description', $f['description'] );
     update_post_meta( $store_id, '_tsa_school_ticker',    $f['ticker'] );
     update_post_meta( $store_id, '_tsa_store_cta_text',   'Shop ' . $f['name'] );
     update_post_meta( $store_id, '_tsa_store_cta_url',    '/schools/' . $slug . '/' );
