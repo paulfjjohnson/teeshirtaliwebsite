@@ -26,6 +26,49 @@ function tsa_school_levels(): array {
 }
 
 /**
+ * The 5 store types the plugin's native "Store Details" box already allows
+ * (class-cpt-store.php save_meta()). Single source of truth for the Builder's
+ * type dropdown so the two screens can never drift out of sync on valid values.
+ */
+function tsa_sb_type_choices(): array {
+    return [
+        'school'   => 'School',
+        'team'     => 'Team',
+        'business' => 'Business',
+        'event'    => 'Event',
+        'main'     => 'TSA Main',
+    ];
+}
+
+/**
+ * Per-type provisioning metadata: the URL base segment (/<base>/<slug>/),
+ * the section's display label, and its directory-listing page template
+ * (empty when none exists yet — caller must not assign a template in that
+ * case, not guess one). Unknown types fall back to school's config so
+ * provisioning never errors on a bad value.
+ */
+function tsa_sb_type_meta( string $type ): array {
+    $map = [
+        'school'   => [ 'base' => 'schools',  'label' => 'Schools',  'directory_template' => 'template-school-directory.php' ],
+        'team'     => [ 'base' => 'teams',    'label' => 'Teams',    'directory_template' => 'template-team-directory.php' ],
+        'business' => [ 'base' => 'business', 'label' => 'Business', 'directory_template' => 'template-business-directory.php' ],
+        'event'    => [ 'base' => 'events',   'label' => 'Events',   'directory_template' => '' ],
+        'main'     => [ 'base' => 'schools',  'label' => 'Schools',  'directory_template' => 'template-school-directory.php' ],
+    ];
+    return $map[ $type ] ?? $map['school'];
+}
+
+/**
+ * Derive the plugin's legacy "Active" flag (_ac_is_active) from the Builder's
+ * richer 3-state Status field, so admins only ever set one status, not two.
+ * Hidden = inactive (configurator should error if visited); live/coming-soon
+ * (and anything unrecognized) = active.
+ */
+function tsa_sb_active_from_status( string $status ): string {
+    return $status === 'hidden' ? '0' : '1';
+}
+
+/**
  * All school store records (configurator_store, type=school), normalized for
  * the directory + color map. Excludes 'hidden' stores. Cached per request.
  */
