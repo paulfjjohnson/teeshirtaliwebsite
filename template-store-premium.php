@@ -50,7 +50,14 @@ tsa_store_chrome_header( $ctx );
 		<div class="dths-shell dths-hero-inner">
 			<span class="dths-kicker"><?php echo esc_html( $ctx['tagline'] ?: 'Official Merch Store' ); ?></span>
 			<h1 class="dths-hero-h1 dths-display" style="margin-top:14px"><?php echo esc_html( strtoupper( $ctx['name'] ) ); ?></h1>
-			<p class="dths-hero-sub">Premium spirit gear powered by Tee Shirt Ali — configure your design on your apparel, color and size, with live pricing and no email back-and-forth.</p>
+			<?php
+			$hero_taglines = [
+				'business' => 'Premium branded merchandise for ' . $ctx['name'] . ' — configure your design on your apparel, color and size, with live pricing and no email back-and-forth.',
+				'event'    => 'Official event merchandise — configure your design on your apparel, color and size, with live pricing and no email back-and-forth.',
+			];
+			$hero_sub = $hero_taglines[ $ctx['type'] ] ?? 'Premium spirit gear powered by Tee Shirt Ali — configure your design on your apparel, color and size, with live pricing and no email back-and-forth.';
+			?>
+			<p class="dths-hero-sub"><?php echo esc_html( $hero_sub ); ?></p>
 			<div class="dths-hero-actions">
 				<?php if ( $live ) : ?>
 					<?php foreach ( array_slice( $live, 0, 2 ) as $i => $pr ) : ?>
