@@ -1,0 +1,593 @@
+/*
+ * TSA Shop CSS
+ * WooCommerce shop / product page styles for Tee Shirt Ali.
+ * Loaded on woocommerce(), is_cart(), is_checkout() pages.
+ * Version: 2.0.0
+ */
+
+/* ═══════════════════════════════════════════════════════
+   SHOP ARCHIVE — PAGE HEADER
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page .woocommerce-products-header,
+.tsa-shop-page .page-title {
+    display: none; /* We use our custom header in the archive template */
+}
+
+/* TSA Shop Header */
+.tsa-shop-header {
+    background:
+        radial-gradient(circle at right, rgba(254,194,192,.4), transparent 40%),
+        linear-gradient(135deg, #fff, var(--tsa-pink-soft));
+    padding: 60px 7% 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.tsa-shop-header h1 {
+    font-size: clamp(36px, 6vw, 58px);
+    line-height: .92;
+    letter-spacing: -2px;
+    margin: 0;
+}
+.tsa-shop-header p {
+    color: var(--tsa-muted);
+    font-size: 16px;
+    margin: 6px 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SHOP TOOLBAR
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page .woocommerce-ordering select,
+.tsa-shop-toolbar select {
+    padding: 10px 16px;
+    border: 1.5px solid var(--tsa-line);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tsa-dark);
+    background: #fff;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 32px;
+}
+
+.tsa-shop-page .woocommerce-result-count {
+    font-size: 13px;
+    color: var(--tsa-muted);
+    font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCT GRID — OVERRIDE FLATSOME/WC DEFAULTS
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page.woocommerce ul.products {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 24px 7% 80px;
+    max-width: 1380px;
+    margin: 0 auto;
+    list-style: none;
+}
+
+.tsa-shop-page.woocommerce ul.products li.product {
+    background: #fff;
+    border: 1px solid var(--tsa-line);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(37,33,36,.07);
+    transition: transform .25s ease, box-shadow .25s ease;
+    padding: 0;
+    margin: 0;
+    float: none;
+    width: auto;
+}
+
+.tsa-shop-page.woocommerce ul.products li.product:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(37,33,36,.12);
+}
+
+/* Product image */
+.tsa-shop-page.woocommerce ul.products li.product img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 0;
+    display: block;
+    margin: 0;
+}
+
+.tsa-shop-page.woocommerce ul.products li.product .woocommerce-loop-product__link {
+    display: block;
+}
+
+/* Product info area */
+.tsa-shop-page.woocommerce ul.products li.product .woocommerce-loop-product__title {
+    font-size: 15px;
+    font-weight: 900;
+    padding: 16px 18px 4px;
+    margin: 0;
+    color: var(--tsa-dark);
+    line-height: 1.3;
+}
+
+.tsa-shop-page.woocommerce ul.products li.product .price {
+    padding: 0 18px 12px;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--tsa-dark);
+    display: block;
+}
+
+/* On-sale badge */
+.tsa-shop-page.woocommerce ul.products li.product .onsale {
+    background: var(--tsa-pink);
+    color: var(--tsa-dark);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 4px 10px;
+    top: 12px;
+    left: 12px;
+    right: auto;
+}
+
+/* Add to cart button */
+.tsa-shop-page.woocommerce ul.products li.product .button,
+.tsa-shop-page.woocommerce ul.products li.product a.button {
+    display: block;
+    width: calc(100% - 36px);
+    margin: 0 18px 18px;
+    background: var(--tsa-dark);
+    color: #fff;
+    border-radius: 999px;
+    padding: 12px;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    text-align: center;
+    transition: opacity .2s, background .2s;
+    border: none;
+    cursor: pointer;
+}
+.tsa-shop-page.woocommerce ul.products li.product .button:hover {
+    opacity: .88;
+    background: var(--tsa-dark);
+    color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SINGLE PRODUCT PAGE
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page.woocommerce div.product {
+    padding: 40px 7%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.tsa-shop-page.woocommerce div.product .product_title {
+    font-size: clamp(28px, 4vw, 44px);
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 14px;
+}
+
+.tsa-shop-page.woocommerce div.product p.price,
+.tsa-shop-page.woocommerce div.product span.price {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--tsa-dark);
+}
+
+/* Single product Add to Cart button */
+.tsa-shop-page.woocommerce div.product .single_add_to_cart_button {
+    background: var(--tsa-dark) !important;
+    color: #fff !important;
+    border-radius: 999px !important;
+    padding: 16px 36px !important;
+    font-weight: 900 !important;
+    font-size: 14px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .4px !important;
+    border: none !important;
+    transition: opacity .2s !important;
+}
+.tsa-shop-page.woocommerce div.product .single_add_to_cart_button:hover { opacity: .85 !important; }
+
+/* Quantity input */
+.tsa-shop-page.woocommerce .quantity input[type="number"] {
+    border: 1.5px solid var(--tsa-line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--tsa-dark);
+    width: 80px;
+}
+
+/* Product tabs */
+.tsa-shop-page.woocommerce div.product .woocommerce-tabs ul.tabs {
+    padding: 0;
+    border-bottom: 2px solid var(--tsa-line);
+}
+.tsa-shop-page.woocommerce div.product .woocommerce-tabs ul.tabs li a {
+    font-weight: 900;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--tsa-muted);
+    padding: 12px 20px;
+    border: none;
+    background: none;
+}
+.tsa-shop-page.woocommerce div.product .woocommerce-tabs ul.tabs li.active a {
+    color: var(--tsa-dark);
+    border-bottom: 2px solid var(--tsa-dark);
+    margin-bottom: -2px;
+}
+.tsa-shop-page.woocommerce div.product .woocommerce-tabs ul.tabs li::before,
+.tsa-shop-page.woocommerce div.product .woocommerce-tabs ul.tabs li::after { display: none; }
+.tsa-shop-page.woocommerce div.product .woocommerce-tabs ul.tabs li { border: none; background: none; border-radius: 0; }
+
+/* ═══════════════════════════════════════════════════════
+   CART PAGE
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page.woocommerce-cart .woocommerce {
+    padding: 60px 7%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.tsa-shop-page .woocommerce table.cart {
+    border-collapse: collapse;
+    font-size: 14px;
+    width: 100%;
+}
+
+.tsa-shop-page .woocommerce table.cart thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--tsa-muted);
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--tsa-line);
+}
+
+.tsa-shop-page .woocommerce table.cart tbody td {
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--tsa-line);
+    vertical-align: middle;
+}
+
+/* Cart totals */
+.tsa-shop-page .woocommerce .cart_totals {
+    background: var(--tsa-pink-soft);
+    border: 1px solid var(--tsa-pink);
+    border-radius: var(--tsa-radius);
+    padding: 28px;
+}
+.tsa-shop-page .woocommerce .cart_totals h2 {
+    font-size: 22px;
+    margin-bottom: 18px;
+    letter-spacing: -.5px;
+}
+.tsa-shop-page .woocommerce .cart_totals table {
+    font-size: 15px;
+    width: 100%;
+}
+.tsa-shop-page .woocommerce .cart_totals table th,
+.tsa-shop-page .woocommerce .cart_totals table td {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--tsa-line);
+}
+
+/* Cart / checkout buttons */
+.tsa-shop-page .woocommerce a.checkout-button,
+.tsa-shop-page .woocommerce input.checkout-button,
+.tsa-shop-page .woocommerce #place_order {
+    background: var(--tsa-dark) !important;
+    color: #fff !important;
+    border-radius: 999px !important;
+    width: 100% !important;
+    padding: 16px !important;
+    font-weight: 900 !important;
+    font-size: 15px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .4px !important;
+    border: none !important;
+    margin-top: 14px !important;
+    transition: opacity .2s !important;
+    cursor: pointer !important;
+}
+.tsa-shop-page .woocommerce a.checkout-button:hover,
+.tsa-shop-page .woocommerce #place_order:hover { opacity: .85 !important; }
+
+/* Cross-sells */
+.tsa-shop-page .cross-sells h2 {
+    font-size: 22px;
+    margin-bottom: 18px;
+    letter-spacing: -.5px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHECKOUT PAGE
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page.woocommerce-checkout .woocommerce {
+    padding: 60px 7%;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 40px;
+    align-items: start;
+}
+
+.tsa-shop-page.woocommerce-checkout h3 {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -.5px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--tsa-line);
+}
+
+.tsa-shop-page.woocommerce-checkout .form-row input,
+.tsa-shop-page.woocommerce-checkout .form-row select,
+.tsa-shop-page.woocommerce-checkout .form-row textarea {
+    border: 1px solid var(--border-strong);    /* design-system token */
+    border-radius: var(--radius-md);           /* 22px — design-system field radius */
+    padding: 14px 16px;
+    font-size: 15px;
+    width: 100%;
+    background: #fff;
+    color: var(--tsa-dark);
+    transition: border-color .2s, box-shadow .2s;
+}
+.tsa-shop-page.woocommerce-checkout .form-row input:focus,
+.tsa-shop-page.woocommerce-checkout .form-row textarea:focus {
+    outline: none;
+    border-color: var(--brand-rose);           /* rose focus per design system */
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(217,135,137,.18);
+}
+
+/* Account / login / register / lost-password / edit-address forms */
+.tsa-shop-page.woocommerce-account input.input-text,
+.tsa-shop-page.woocommerce-account .form-row input,
+.tsa-shop-page.woocommerce-account .form-row select,
+.tsa-shop-page.woocommerce-account .form-row textarea {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    font-size: 15px;
+    width: 100%;
+    background: #fff;
+    color: var(--tsa-dark);
+    transition: border-color .2s, box-shadow .2s;
+}
+.tsa-shop-page.woocommerce-account input.input-text:focus,
+.tsa-shop-page.woocommerce-account .form-row input:focus,
+.tsa-shop-page.woocommerce-account .form-row textarea:focus {
+    outline: none;
+    border-color: var(--brand-rose);
+    box-shadow: 0 0 0 3px rgba(217,135,137,.18);
+}
+
+.tsa-shop-page.woocommerce-checkout label {
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--tsa-dark);
+}
+
+/* Order review box */
+.tsa-shop-page #order_review_heading { font-size: 18px; font-weight: 900; letter-spacing: -.5px; margin-bottom: 14px; }
+.tsa-shop-page table.woocommerce-checkout-review-order-table {
+    width: 100%;
+    font-size: 14px;
+}
+.tsa-shop-page table.woocommerce-checkout-review-order-table th,
+.tsa-shop-page table.woocommerce-checkout-review-order-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--tsa-line);
+}
+.tsa-shop-page table.woocommerce-checkout-review-order-table tfoot tr:last-child td {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAGINATION
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page .woocommerce-pagination {
+    display: flex;
+    justify-content: center;
+    padding: 0 7% 60px;
+}
+.tsa-shop-page .woocommerce-pagination ul {
+    display: flex;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.tsa-shop-page .woocommerce-pagination ul li a,
+.tsa-shop-page .woocommerce-pagination ul li span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tsa-dark);
+    border: 1px solid var(--tsa-line);
+    transition: all .2s;
+}
+.tsa-shop-page .woocommerce-pagination ul li a:hover,
+.tsa-shop-page .woocommerce-pagination ul li span.current {
+    background: var(--tsa-dark);
+    color: #fff;
+    border-color: var(--tsa-dark);
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOTICES
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page .woocommerce-message,
+.tsa-shop-page .woocommerce-info,
+.tsa-shop-page .woocommerce-error {
+    border-radius: 14px;
+    padding: 16px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border-left: 4px solid var(--tsa-dark);
+    background: #fff;
+    margin: 20px 7%;
+    box-shadow: var(--tsa-shadow-sm);
+}
+.tsa-shop-page .woocommerce-message { border-left-color: #16a34a; }
+.tsa-shop-page .woocommerce-info    { border-left-color: var(--tsa-pink); }
+.tsa-shop-page .woocommerce-error   { border-left-color: #dc2626; }
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+    .tsa-shop-page.woocommerce ul.products { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .tsa-shop-page.woocommerce ul.products { grid-template-columns: repeat(2, 1fr); padding: 20px 5% 60px; }
+    .tsa-shop-page.woocommerce-checkout .woocommerce { grid-template-columns: 1fr; gap: 28px; padding: 40px 5%; }
+    .tsa-shop-header { padding: 40px 5% 36px; }
+}
+
+@media (max-width: 600px) {
+    .tsa-shop-page.woocommerce ul.products { grid-template-columns: 1fr; }
+    .tsa-shop-page.woocommerce ul.products li.product img { height: 240px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCT CARDS — archive override sub-elements (.tsa-product-card__*)
+   woocommerce/archive-product.php emits these BEM classes. Without the
+   image-wrap aspect ratio the product images render at native size and the
+   category grid looks jumbled — this makes every card uniform.
+═══════════════════════════════════════════════════════ */
+.tsa-product-grid, .tsa-product-grid > li { list-style: none !important; margin-left: 0; }
+.tsa-product-grid > li::marker { content: none; }
+.tsa-product-card { display: flex; flex-direction: column; height: 100%; }
+.tsa-product-card__img-wrap {
+    position: relative; display: block;
+    aspect-ratio: 1 / 1;
+    background: #fff;
+    overflow: hidden;
+}
+.tsa-product-card__img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: contain;          /* designs are artwork — show the whole thing */
+    padding: 16px; box-sizing: border-box;
+    display: block;
+    transition: transform .3s ease;
+}
+.tsa-product-card:hover .tsa-product-card__img-wrap img { transform: scale(1.04); }
+/* Hover swap: design artwork → on-garment mockup (related cards) */
+.tsa-product-card__img-wrap .tsa-pc-back {
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity .3s ease;
+}
+.tsa-product-card__img-wrap:hover .tsa-pc-back { opacity: 1; }
+.tsa-product-card__badge {
+    position: absolute; top: 12px; left: 12px;
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--tsa-dark, #252124); color: #fff;
+}
+.tsa-product-card__badge--sale { background: #dc2626; color: #fff; }
+.tsa-product-card__badge--new  { background: var(--tsa-pink, #fec2c0); color: var(--tsa-dark, #252124); }
+.tsa-product-card__overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(37,33,36,.28);
+    opacity: 0; transition: opacity .25s ease;
+}
+.tsa-product-card__img-wrap:hover .tsa-product-card__overlay { opacity: 1; }
+.tsa-product-card__body {
+    display: flex; flex-direction: column; flex: 1;
+    padding: 16px 18px 18px;
+}
+.tsa-product-card__cat {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--tsa-muted, #6d6268); margin-bottom: 6px;
+}
+.tsa-product-card__name {
+    font-size: 15px; font-weight: 800; line-height: 1.3;
+    margin: 0 0 8px; color: var(--tsa-dark, #252124);
+    min-height: 2.6em;   /* reserve 2 lines so 1- and 2-line names align */
+}
+.tsa-product-card__name a { color: inherit; }
+.tsa-product-card__price {
+    font-size: 16px; font-weight: 900; color: var(--tsa-dark, #252124);
+    margin: 0 0 12px;
+}
+/* Pin the Shop Now button to the bottom so every card's button aligns
+   (overrides the inline margin-top on the link). */
+.tsa-product-card__body .tsa-btn { margin-top: auto !important; }
+.tsa-product-card__price .amount,
+.tsa-product-card__price del,
+.tsa-product-card__price ins { color: var(--tsa-dark, #252124); }
+.tsa-product-card__price del { opacity: .5; font-weight: 700; }
+@media (max-width: 600px) {
+    .tsa-product-card__img-wrap { aspect-ratio: 4 / 3; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SINGLE PRODUCT — Related products (Flatsome carousel markup)
+   Flatsome renders related as .related-products-wrapper > .row-slider >
+   .product-small cards (a flickity carousel), NOT ul.products. Theme the
+   heading + wrapper and tidy the cards; let Flatsome's slider lay them out.
+═══════════════════════════════════════════════════════ */
+.tsa-shop-page .related.related-products-wrapper {
+    max-width: 1320px; margin: 48px auto 0;
+    padding: 36px 24px 0;
+    border-top: 1px solid var(--tsa-line);
+    clear: both;
+}
+.tsa-shop-page .related .product-section-title {
+    font-size: 24px; font-weight: 900; letter-spacing: -.5px;
+    text-align: center; color: var(--tsa-dark, #252124);
+    border: 0; padding: 0; margin: 0 0 22px;
+}
+.tsa-shop-page .related .product-small .box-image img { border-radius: 10px; }
+.tsa-shop-page .related .product-small .box-text { padding-top: 10px; }
+
+/* Static grid (TSA related.php override drops Flatsome's slider) */
+.tsa-shop-page .related .tsa-related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px 20px;
+}
+.tsa-shop-page .related .tsa-related-grid > .product-small {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+    left: auto !important;
+    position: relative !important;
+    transform: none !important;
+}
+@media (max-width: 1100px) { .tsa-shop-page .related .tsa-related-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px)  { .tsa-shop-page .related .tsa-related-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px)  { .tsa-shop-page .related .tsa-related-grid { grid-template-columns: 1fr; } }

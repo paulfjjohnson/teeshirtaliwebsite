@@ -1,0 +1,507 @@
+/*
+ * TSA Tee Party — Dedicated CSS (LIGHT THEME)
+ * Loaded only on template-tee-party.php via conditional enqueue.
+ * Rebranded from the original dark "drops" look to the site's light blush/rose
+ * theme using design tokens. Class names unchanged so the template needs no edits.
+ * Version: 3.0.0
+ */
+
+/* ═══════════════════════════════════════════════════════
+   COUNTDOWN TIMER
+═══════════════════════════════════════════════════════ */
+.tsa-countdown {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tsa-countdown__block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 72px;
+}
+
+.tsa-countdown__num {
+    font-size: clamp(42px, 8vw, 72px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -2px;
+    color: var(--brand-rose);
+    font-variant-numeric: tabular-nums;
+    animation: tsa-pulse 1s ease-in-out infinite;
+}
+
+.tsa-countdown__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+}
+
+.tsa-countdown__sep {
+    font-size: clamp(36px, 6vw, 60px);
+    font-weight: 900;
+    color: var(--border-strong);
+    line-height: 1;
+    align-self: flex-start;
+    padding-top: 6px;
+}
+
+@keyframes tsa-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .8; }
+}
+
+/* Expired / live state */
+.tsa-countdown--live .tsa-countdown__num {
+    color: var(--status-success);
+    animation: none;
+}
+
+.tsa-countdown--expired {
+    display: none;
+}
+
+.tsa-party-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(63, 157, 107, .12);
+    border: 1px solid rgba(63, 157, 107, .35);
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--status-success);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: tsa-live-glow 2s ease-in-out infinite;
+}
+
+.tsa-party-live-badge::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--status-success);
+    box-shadow: 0 0 0 0 rgba(63, 157, 107, .6);
+    animation: tsa-live-dot 1.4s ease-in-out infinite;
+}
+
+@keyframes tsa-live-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(63, 157, 107, .08); }
+    50%       { box-shadow: 0 0 36px rgba(63, 157, 107, .18); }
+}
+
+@keyframes tsa-live-dot {
+    0%   { box-shadow: 0 0 0 0 rgba(63, 157, 107, .5); }
+    70%  { box-shadow: 0 0 0 8px rgba(63, 157, 107, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(63, 157, 107, 0); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARTY HERO SECTION
+═══════════════════════════════════════════════════════ */
+.tsa-party-hero {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 24px 80px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tsa-party-hero__bg {
+    position: absolute;
+    inset: 0;
+    background: var(--wash-hero);
+    z-index: 0;
+}
+
+/* Animated soft blooms (blush + rose) */
+.tsa-party-hero__bg::before,
+.tsa-party-hero__bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+}
+.tsa-party-hero__bg::before {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(254, 194, 192, .45) 0%, transparent 70%);
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: tsa-hero-glow 6s ease-in-out infinite alternate;
+}
+.tsa-party-hero__bg::after {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(217, 135, 137, .22) 0%, transparent 70%);
+    bottom: -60px;
+    right: 10%;
+    animation: tsa-hero-glow 8s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes tsa-hero-glow {
+    from { transform: translateX(-50%) scale(1); opacity: .65; }
+    to   { transform: translateX(-50%) scale(1.15); opacity: 1; }
+}
+
+.tsa-party-hero__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.tsa-party-hero__kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(254, 194, 192, .2);
+    border: 1px solid rgba(217, 135, 137, .35);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--tsa-rose-text);
+    margin-bottom: 24px;
+}
+
+.tsa-party-hero__kicker::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand-rose);
+    box-shadow: 0 0 0 0 rgba(217, 135, 137, .6);
+    animation: tsa-live-dot 1.4s ease-in-out infinite;
+}
+
+.tsa-party-hero h1 {
+    font-size: clamp(48px, 9vw, 90px);
+    line-height: .9;
+    letter-spacing: -3px;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.tsa-party-hero h1 span {
+    color: var(--brand-rose);
+}
+
+.tsa-party-hero__desc {
+    font-size: 18px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0 0 40px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   URGENCY STRIP
+═══════════════════════════════════════════════════════ */
+.tsa-party-urgency {
+    background: linear-gradient(90deg, var(--tsa-pink) 0%, var(--tsa-pink-deep) 100%);
+    color: var(--tsa-ink);
+    padding: 14px 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tsa-party-urgency::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.4) 50%, transparent 100%);
+    animation: tsa-urgency-shine 3s linear infinite;
+}
+
+@keyframes tsa-urgency-shine {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARTY STATUS BAR
+═══════════════════════════════════════════════════════ */
+.tsa-party-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.tsa-party-status__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-success);
+    box-shadow: 0 0 6px rgba(63, 157, 107, .6);
+    animation: tsa-live-dot 1.4s ease-in-out infinite;
+}
+
+.tsa-party-status--closed .tsa-party-status__dot {
+    background: var(--border-strong);
+    box-shadow: none;
+    animation: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARTY PRODUCT GRID SECTION
+═══════════════════════════════════════════════════════ */
+.tsa-party-products {
+    background: var(--surface-tint);
+    padding: 80px 0;
+}
+
+.tsa-party-products .tsa-section-head {
+    text-align: center;
+    margin-bottom: 48px;
+    color: var(--text-primary);
+}
+
+.tsa-party-products .tsa-section-head h2 {
+    font-size: clamp(32px, 5vw, 56px);
+    color: var(--text-primary);
+    letter-spacing: -1.5px;
+}
+
+.tsa-party-products .tsa-section-head p {
+    color: var(--text-muted);
+    font-size: 17px;
+}
+
+/* Product grid on light bg */
+.tsa-party-products .tsa-product-grid {
+    --tsa-product-bg: var(--surface-card);
+    --tsa-product-border: var(--border);
+}
+
+.tsa-party-products .tsa-product-card {
+    background: var(--surface-card);
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.tsa-party-products .tsa-product-card:hover {
+    background: var(--surface-card);
+    border-color: var(--brand-rose);
+    box-shadow: var(--shadow-md);
+}
+
+.tsa-party-products .tsa-product-card__name {
+    color: var(--text-primary);
+}
+
+.tsa-party-products .tsa-product-card__price {
+    color: var(--brand-rose);
+}
+
+/* ═══════════════════════════════════════════════════════
+   DROP SCHEDULE TABLE
+═══════════════════════════════════════════════════════ */
+.tsa-drop-schedule {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface-card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.tsa-drop-schedule thead tr {
+    background: var(--surface-tint);
+}
+
+.tsa-drop-schedule th {
+    padding: 14px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.tsa-drop-schedule td {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+}
+
+.tsa-drop-schedule tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tsa-drop-schedule tbody tr:hover td {
+    background: var(--surface-tint);
+}
+
+.tsa-drop-schedule .tsa-drop-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.tsa-drop-status--active   { background: rgba(63,157,107,.14); color: var(--status-success); }
+.tsa-drop-status--upcoming { background: rgba(217,135,137,.14); color: var(--brand-rose); }
+.tsa-drop-status--ended    { background: rgba(37,33,36,.07); color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════════════
+   HOW IT WORKS — PARTY STEPS
+═══════════════════════════════════════════════════════ */
+.tsa-party-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+}
+
+.tsa-party-step {
+    text-align: center;
+}
+
+.tsa-party-step__num {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(254, 194, 192, .25);
+    border: 1px solid rgba(217, 135, 137, .35);
+    color: var(--brand-rose);
+    font-size: 20px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.tsa-party-step h4 {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+}
+
+.tsa-party-step p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAST DROPS GRID
+═══════════════════════════════════════════════════════ */
+.tsa-past-drops {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.tsa-past-drop {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color .2s, box-shadow .2s;
+    box-shadow: var(--shadow-xs);
+}
+
+.tsa-past-drop:hover {
+    border-color: var(--brand-rose);
+    box-shadow: var(--shadow-sm);
+}
+
+.tsa-past-drop__date {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.tsa-past-drop__name {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.tsa-past-drop__units {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARTY CTA SECTION (dark band — matches site-wide CTAs)
+═══════════════════════════════════════════════════════ */
+.tsa-party-cta {
+    background: var(--wash-cta);
+    padding: 80px 24px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+}
+
+.tsa-party-cta h2 {
+    font-size: clamp(30px, 5vw, 52px);
+    color: var(--tsa-white);
+    letter-spacing: -1.5px;
+    margin-bottom: 16px;
+}
+
+.tsa-party-cta p {
+    font-size: 17px;
+    color: var(--text-on-dark-muted);
+    max-width: 560px;
+    margin: 0 auto 32px;
+    line-height: 1.55;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .tsa-party-hero { padding: 80px 20px 60px; }
+    .tsa-countdown { gap: 12px; }
+    .tsa-countdown__num { font-size: 38px; letter-spacing: -1px; }
+    .tsa-countdown__sep { font-size: 32px; }
+    .tsa-party-steps { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+    .tsa-countdown { gap: 8px; }
+    .tsa-countdown__block { min-width: 56px; }
+    .tsa-countdown__num { font-size: 32px; }
+    .tsa-party-steps { grid-template-columns: 1fr; }
+}

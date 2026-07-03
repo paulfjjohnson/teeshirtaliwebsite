@@ -1,0 +1,279 @@
+/* =============================================================================
+   Tee Shirt Ali — Design Tokens + Base (flattened, enqueue-ready)
+   Generated from the Tee Shirt Ali Design System. No @import — load this one
+   file in your Flatsome child theme. Source of truth: the design-system project.
+   ============================================================================= */
+
+/* ----- tokens/colors.css ----- */
+/* ===========================================================================
+   Tee Shirt Ali — Color Tokens
+   Source of truth: Index.html homepage preview (:root --tsa-* vars)
+   Base palette first, then semantic aliases.
+   =========================================================================== */
+
+:root {
+  /* --- Base palette ------------------------------------------------------ */
+
+  /* Blush — the signature brand color (CTAs, highlights, kickers) */
+  --tsa-pink:       #fec2c0;
+  --tsa-pink-soft:  #fff1f0;  /* tinted section / surface background */
+  --tsa-pink-deep:  #f7a9a6;  /* hover / pressed variant of blush */
+
+  /* Rose — warm accents drawn from the logo + eyebrow text */
+  --tsa-rose:       #d98789;  /* logo "Ali" accent */
+  --tsa-rose-text:  #b97878;  /* eyebrow / kicker label text */
+
+  /* Gold — premium accent (M.O.B.S. luxury cues, dividers, details) */
+  --tsa-gold:       #d8a85f;
+  --tsa-gold-soft:  #f0dcb4;
+
+  /* Ink — near-black neutrals for type and dark surfaces */
+  --tsa-ink:        #252124;  /* primary text + dark buttons */
+  --tsa-ink-soft:   #3a3037;  /* gradient partner / raised dark surface */
+  --tsa-black:      #181518;  /* footer / deepest surface */
+  --tsa-muted:      #6d6268;  /* secondary / supporting text */
+
+  /* Plum + purple — the "Now Live" store + streetwear story */
+  --tsa-plum-900:   #17121f;
+  --tsa-plum-800:   #231532;
+  --tsa-plum-700:   #24143a;
+  --tsa-purple:     #5f35a5;
+
+  --tsa-white:      #ffffff;
+
+  /* Hairline + scrim built from ink */
+  --tsa-line:       rgba(37, 33, 36, .12);
+  --tsa-line-strong:rgba(37, 33, 36, .22);
+  --tsa-scrim:      rgba(37, 33, 36, .55);
+
+  /* --- Semantic aliases -------------------------------------------------- */
+
+  /* Surfaces */
+  --surface-page:     var(--tsa-white);
+  --surface-tint:     var(--tsa-pink-soft);
+  --surface-card:     var(--tsa-white);
+  --surface-dark:     var(--tsa-ink);
+  --surface-darker:   var(--tsa-black);
+  --surface-feature:  var(--tsa-plum-800); /* purple feature blocks */
+
+  /* Text */
+  --text-primary:   var(--tsa-ink);
+  --text-muted:     var(--tsa-muted);
+  --text-inverse:   var(--tsa-white);
+  --text-eyebrow:   var(--tsa-rose-text);
+  --text-on-dark-muted: rgba(255, 255, 255, .82);
+
+  /* Brand roles */
+  --brand-primary:  var(--tsa-pink);   /* primary action / blush */
+  --brand-accent:   var(--tsa-gold);   /* premium accent */
+  --brand-rose:     var(--tsa-rose);
+
+  /* Lines + borders */
+  --border:         var(--tsa-line);
+  --border-strong:  var(--tsa-line-strong);
+
+  /* Action / control roles */
+  --action-fill:        var(--tsa-pink);
+  --action-fill-hover:  var(--tsa-pink-deep);
+  --action-text:        var(--tsa-ink);
+  --action-dark-fill:   var(--tsa-ink);
+  --action-dark-text:   var(--tsa-white);
+
+  /* Feedback (derived to sit beside the warm palette) */
+  --status-success: #3f9d6b;
+  --status-warning: var(--tsa-gold);
+  --status-error:   #c8553d;
+  --status-info:    var(--tsa-purple);
+}
+
+/* ----- tokens/typography.css ----- */
+/* ===========================================================================
+   Tee Shirt Ali — Typography Tokens
+   The live site uses a heavy system grotesque (Arial/Helvetica) with very
+   bold display weights, tight display tracking, and wide uppercase tracking
+   on labels + buttons. We keep that stack faithfully and expose a display
+   alias so a real typeface can be swapped in later (see readme).
+   =========================================================================== */
+
+:root {
+  /* --- Families ---------------------------------------------------------- */
+  --font-sans:    Arial, Helvetica, "Helvetica Neue", system-ui, sans-serif;
+  /* Display defaults to the sans; override this one var to upgrade later. */
+  --font-display: var(--font-sans);
+  --font-mono:    ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* --- Weights ----------------------------------------------------------- */
+  --weight-regular: 400;
+  --weight-bold:    700;  /* nav links, pills, emphasis */
+  --weight-black:   900;  /* display headings + buttons */
+
+  /* --- Display + heading sizes (fluid, from the homepage) --------------- */
+  --text-hero:    clamp(46px, 7vw, 82px);  /* h1 hero */
+  --text-display: clamp(36px, 5vw, 58px);  /* big feature h2 */
+  --text-h2:      clamp(34px, 5vw, 54px);  /* section heads */
+  --text-h3:      26px;                    /* card titles */
+  --text-h4:      22px;                    /* compact card titles */
+
+  /* --- Body + UI sizes --------------------------------------------------- */
+  --text-lead:    21px;  /* hero paragraph */
+  --text-body:    18px;  /* default paragraph */
+  --text-sm:      15px;
+  --text-meta:    14px;  /* nav, fine print, card captions */
+  --text-label:   13px;  /* button text */
+  --text-kicker:  12px;  /* eyebrow label */
+
+  /* --- Line heights ------------------------------------------------------ */
+  --leading-hero: .95;   /* hero display */
+  --leading-tight:1;     /* big headings */
+  --leading-snug: 1.1;
+  --leading-body: 1.55;  /* paragraphs */
+
+  /* --- Letter spacing ---------------------------------------------------- */
+  --tracking-hero:   -2px;    /* tightened display */
+  --tracking-tight:  -.5px;
+  --tracking-normal: 0;
+  --tracking-label:  .4px;    /* uppercase buttons */
+  --tracking-kicker: 1.5px;   /* uppercase eyebrow */
+}
+
+/* ----- tokens/spacing.css ----- */
+/* ===========================================================================
+   Tee Shirt Ali — Spacing & Layout Tokens
+   Spacing scale + the page rhythm used across the site (generous section
+   padding, a percentage gutter, and a centered max content width).
+   =========================================================================== */
+
+:root {
+  /* --- Spacing scale (px) ------------------------------------------------ */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  14px;   /* default action gap */
+  --space-5:  18px;
+  --space-6:  22px;   /* card grid gap */
+  --space-7:  28px;
+  --space-8:  34px;
+  --space-9:  42px;
+  --space-10: 48px;   /* hero column gap */
+  --space-12: 64px;
+  --space-14: 90px;   /* section vertical padding */
+
+  /* --- Page layout ------------------------------------------------------- */
+  --gutter:        7%;       /* horizontal page padding */
+  --section-pad-y: 90px;     /* vertical section padding */
+  --content-max:   1180px;   /* centered content container */
+  --measure-max:   760px;    /* centered prose / section heads */
+
+  /* --- Component padding -------------------------------------------------- */
+  --pad-card:    32px;
+  --pad-card-sm: 20px;
+  --pad-btn-y:   14px;
+  --pad-btn-x:   22px;
+}
+
+/* ----- tokens/effects.css ----- */
+/* ===========================================================================
+   Tee Shirt Ali — Effects Tokens
+   Corner radii + the soft, warm shadow system. Shadows are tinted with the
+   ink color (neutral elevation) or blush (for primary actions).
+   =========================================================================== */
+
+:root {
+  /* --- Radii ------------------------------------------------------------- */
+  --radius-sm:   16px;
+  --radius-md:   22px;   /* compact cards / config window */
+  --radius-lg:   26px;   /* default card radius (--tsa-radius) */
+  --radius-xl:   34px;   /* hero card / feature panels */
+  --radius-2xl:  36px;   /* large feature blocks */
+  --radius-pill: 999px;  /* buttons, pills, kickers */
+
+  /* --- Elevation (neutral, ink-tinted) ----------------------------------- */
+  --shadow-xs:  0 8px 24px rgba(37, 33, 36, .06);
+  --shadow-sm:  0 10px 28px rgba(37, 33, 36, .08);
+  --shadow-md:  0 12px 34px rgba(37, 33, 36, .07);
+  --shadow-lg:  0 18px 50px rgba(37, 33, 36, .12);  /* --tsa-shadow */
+
+  /* --- Branded glow (blush) for primary actions -------------------------- */
+  --shadow-action: 0 12px 30px rgba(254, 194, 192, .42);
+
+  /* --- Signature background washes --------------------------------------- */
+  /* Hero: blush radial bloom over a soft diagonal tint */
+  --wash-hero:
+    radial-gradient(circle at top right, rgba(254, 194, 192, .72), transparent 35%),
+    linear-gradient(135deg, #fff, var(--tsa-pink-soft));
+  /* Purple feature block ("Now Live" store) */
+  --wash-feature: linear-gradient(135deg, var(--tsa-plum-800), var(--tsa-purple));
+  /* Dark CTA band */
+  --wash-cta: linear-gradient(135deg, var(--tsa-ink), var(--tsa-ink-soft));
+
+  /* --- Motion ------------------------------------------------------------ */
+  --ease-standard: cubic-bezier(.25, .1, .25, 1); /* @kind other */
+  --transition:    .25s ease; /* @kind other */
+  --lift:          translateY(-2px); /* @kind other */ /* primary button hover */
+}
+
+/* ----- tokens/base.css ----- */
+/* ===========================================================================
+   Tee Shirt Ali — Base / Reset
+   Element defaults wired to the tokens. Consumers get sensible typography and
+   box-sizing for free. Keep this lean — component styling lives in JSX.
+   =========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  color: var(--text-primary);
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* Ink headings sitewide — out-muscle Flatsome's gray heading color WITHOUT
+   !important. Specificity here (body + element = 0,0,2 / .heading-font = 0,1,0)
+   beats Flatsome's base rules but stays BELOW the white-on-dark heading rules
+   (e.g. .tsa-cta h2, .tsa-store-copy h2, footer headings at 0,1,1), so those
+   keep their white. Loaded at priority 25, after Flatsome. */
+h1, h2, h3, h4, h5, h6, .heading-font,
+body h1, body h2, body h3, body h4, body h5, body h6 {
+  color: var(--text-primary);
+}
+
+h1 { font-size: var(--text-hero);    line-height: var(--leading-hero); letter-spacing: var(--tracking-hero); }
+h2 { font-size: var(--text-h2);      line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
+h3 { font-size: var(--text-h3);      line-height: var(--leading-snug); }
+h4 { font-size: var(--text-h4);      line-height: var(--leading-snug); }
+
+p { margin: 0; text-wrap: pretty; }
+
+a { color: inherit; text-decoration: none; }
+
+img { display: block; max-width: 100%; }
+
+button { font-family: inherit; }
+
+::selection { background: var(--tsa-pink); color: var(--tsa-ink); }
+
+/* --- Small helpers used by specimen cards + kits ------------------------- */
+.tsa-eyebrow {
+  display: inline-flex;
+  font-size: var(--text-kicker);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+  color: var(--text-eyebrow);
+}
+

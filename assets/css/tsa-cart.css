@@ -1,0 +1,130 @@
+/* ═══════════════════════════════════════════════════════
+   TSA CART UI — off-canvas mini-cart drawer + themed cart page
+   Uses the theme design tokens (--tsa-pink, --tsa-gold, etc.)
+═══════════════════════════════════════════════════════ */
+
+/* Hide Flatsome's built-in header cart dropdown — replaced by the drawer */
+.header .cart-dropdown,
+#cart-popup,
+.header-cart .nav-dropdown,
+li.cart-item .nav-dropdown { display: none !important; }
+
+/* ── Overlay + drawer shell ── */
+.tsa-cart-overlay {
+  position: fixed; inset: 0; background: rgba(37,33,36,.45);
+  opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility .25s ease; z-index: 99998;
+}
+.tsa-cart-overlay.is-open { opacity: 1; visibility: visible; }
+
+.tsa-cart-drawer {
+  position: fixed; top: 0; right: 0; height: 100%; width: 380px; max-width: 88vw;
+  background: var(--tsa-white,#fff); z-index: 99999;
+  display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow: -18px 0 50px rgba(37,33,36,.18); will-change: transform;
+}
+.tsa-cart-drawer.is-open { transform: translateX(0); }
+body.tsa-cart-open { overflow: hidden; }
+
+.tsa-cart-drawer__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px; border-bottom: 1px solid var(--tsa-line,rgba(37,33,36,.12)); flex: none;
+}
+.tsa-cart-drawer__title { font-size: 17px; font-weight: 700; color: var(--tsa-dark,#252124); letter-spacing: -.2px; }
+.tsa-cart-drawer__close {
+  width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--tsa-pink-soft,#fff1f0);
+  color: var(--tsa-dark,#252124); font-size: 22px; line-height: 1; cursor: pointer; transition: background .2s;
+}
+.tsa-cart-drawer__close:hover { background: var(--tsa-pink-mid,#fdd5d3); }
+
+/* ── Body (the fragment) ── */
+.tsa-cart-drawer__body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.tsa-cart-lines { flex: 1; overflow-y: auto; list-style: none; margin: 0; padding: 6px 20px; }
+
+.tsa-cart-line { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; padding: 14px 0; border-bottom: 1px solid rgba(37,33,36,.08); position: relative; }
+.tsa-cart-line__thumb img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; background: var(--tsa-pink-soft,#fff1f0); display: block; }
+.tsa-cart-line__info { min-width: 0; }
+.tsa-cart-line__name { font-size: 14px; font-weight: 600; color: var(--tsa-dark,#252124); line-height: 1.3; }
+.tsa-cart-line__meta { font-size: 12px; color: var(--tsa-muted,#6d6268); margin: 2px 0 8px; }
+.tsa-cart-line__meta p { margin: 0; }
+.tsa-cart-line__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tsa-cart-line__price { font-size: 14px; font-weight: 700; color: var(--tsa-dark,#252124); white-space: nowrap; }
+.tsa-cart-line__remove { position: absolute; top: 10px; right: 0; width: 22px; height: 22px; border: 0; background: none; color: var(--tsa-muted-2,#9b8f93); font-size: 18px; line-height: 1; cursor: pointer; }
+.tsa-cart-line__remove:hover { color: var(--tsa-dark,#252124); }
+
+.tsa-cart-qty { display: inline-flex; align-items: center; border: 1px solid var(--tsa-line-strong,rgba(37,33,36,.22)); border-radius: 8px; overflow: hidden; }
+.tsa-cart-qty__btn { width: 28px; height: 28px; border: 0; background: var(--tsa-white,#fff); color: var(--tsa-muted,#6d6268); font-size: 16px; cursor: pointer; }
+.tsa-cart-qty__btn:hover { background: var(--tsa-pink-soft,#fff1f0); color: var(--tsa-dark,#252124); }
+.tsa-cart-qty__v { min-width: 28px; text-align: center; font-size: 13px; font-weight: 600; }
+
+.tsa-cart-empty { padding: 48px 24px; text-align: center; color: var(--tsa-muted,#6d6268); }
+.tsa-cart-empty p { margin: 0 0 16px; }
+
+.tsa-cart-foot { flex: none; padding: 16px 20px; background: var(--tsa-pink-soft,#fff1f0); border-top: 1px solid var(--tsa-line,rgba(37,33,36,.12)); }
+.tsa-cart-subtotal { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.tsa-cart-subtotal span { font-size: 14px; color: var(--tsa-muted,#6d6268); }
+.tsa-cart-subtotal strong { font-size: 20px; font-weight: 800; color: var(--tsa-dark,#252124); }
+.tsa-cart-actions { display: flex; gap: 10px; }
+.tsa-cart-btn { flex: 1; text-align: center; padding: 11px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: filter .2s, background .2s; }
+.tsa-cart-btn--primary { background: var(--tsa-gold,#d8a85f); color: var(--tsa-dark,#252124); border: 1.5px solid var(--tsa-gold,#d8a85f); }
+.tsa-cart-btn--primary:hover { filter: brightness(.95); }
+.tsa-cart-btn--ghost { background: transparent; color: var(--tsa-dark,#252124); border: 1.5px solid var(--tsa-dark,#252124); }
+.tsa-cart-btn--ghost:hover { background: var(--tsa-pink-mid,#fdd5d3); }
+
+@media (max-width: 420px) { .tsa-cart-drawer { width: 100%; max-width: 100%; } }
+
+/* ═══════════════════════════════════════════════════════
+   CART PAGE — themed to TSA
+═══════════════════════════════════════════════════════ */
+.woocommerce-cart .cart_totals,
+.woocommerce-cart table.shop_table {
+  border: 1px solid var(--tsa-line,rgba(37,33,36,.12)) !important;
+  border-radius: var(--tsa-radius-sm,14px) !important;
+  overflow: hidden; background: var(--tsa-white,#fff);
+}
+.woocommerce-cart table.shop_table th { background: var(--tsa-pink-soft,#fff1f0) !important; color: var(--tsa-dark,#252124) !important; font-weight: 700; }
+.woocommerce-cart table.shop_table td, .woocommerce-cart table.shop_table th { border-top: 1px solid var(--tsa-line,rgba(37,33,36,.10)) !important; }
+.woocommerce-cart .product-thumbnail img { border-radius: 10px; }
+.woocommerce-cart .cart_totals h2 { color: var(--tsa-dark,#252124); }
+.woocommerce-cart .cart_totals .order-total .amount { color: var(--tsa-dark,#252124); font-weight: 800; }
+
+/* Quantity boxes on the cart page */
+.woocommerce-cart .quantity input.qty {
+  border: 1px solid var(--tsa-line-strong,rgba(37,33,36,.22)) !important; border-radius: 8px !important;
+  background: var(--tsa-white,#fff) !important; color: var(--tsa-dark,#252124) !important;
+}
+
+/* Buttons (update cart, checkout, apply coupon) */
+.woocommerce-cart .button,
+.woocommerce-cart .checkout-button,
+.woocommerce-cart .wc-proceed-to-checkout .button {
+  background: var(--tsa-gold,#d8a85f) !important; color: var(--tsa-dark,#252124) !important;
+  border: 0 !important; border-radius: 12px !important; font-weight: 700 !important;
+}
+.woocommerce-cart .checkout-button { background: var(--tsa-gold,#d8a85f) !important; }
+.woocommerce-cart .coupon .button { background: var(--tsa-dark,#252124) !important; color: var(--tsa-white,#fff) !important; }
+.woocommerce-cart .button:hover, .woocommerce-cart .checkout-button:hover { filter: brightness(.95); }
+.woocommerce-cart a.remove { color: var(--tsa-dark,#252124) !important; border-color: var(--tsa-line,rgba(37,33,36,.2)); }
+
+/* Softer, smoother separators — lighter borders + a subtle card shadow instead
+   of hard 1px boxes, lighter row dividers, and no blocky tint on totals labels. */
+.woocommerce-cart .cart_totals,
+.woocommerce-cart table.shop_table {
+  border-color: rgba(37,33,36,.07) !important;
+  box-shadow: 0 2px 14px rgba(37,33,36,.05);
+}
+.woocommerce-cart table.shop_table td,
+.woocommerce-cart table.shop_table th { border-top-color: rgba(37,33,36,.06) !important; }
+.woocommerce-cart .cart_totals table.shop_table th { background: transparent !important; }
+
+/* Checkout page header (title + back-to-cart) */
+.tsa-checkout-head { margin: 0 0 20px; }
+.tsa-checkout-back { display: inline-block; font-size: 13px; font-weight: 700; color: var(--tsa-gold,#d8a85f); text-decoration: none; margin-bottom: 4px; }
+.tsa-checkout-back:hover { text-decoration: underline; }
+.tsa-checkout-title { font-size: clamp(26px,4vw,34px); font-weight: 900; margin: 2px 0 0; color: var(--tsa-dark,#252124); letter-spacing: -.5px; }
+
+/* Mockup composite (cart page + mini-cart drawer) — keep the layered garment +
+   design proportional; override the drawer's 60×60 cover rule on the inner imgs. */
+.tsa-cart-mockup { position: relative; width: 100%; line-height: 0; }
+.tsa-cart-mockup > img { width: 100% !important; height: auto !important; object-fit: contain !important; border-radius: 10px; }
+.tsa-cart-mockup span img { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; border-radius: 0 !important; }

@@ -1,0 +1,73 @@
+/* =============================================================================
+   Tee Shirt Ali — Apparel Configurator brand restyle (child-theme override)
+   --------------------------------------------------------------------------
+   The configurator plugin ships a generic BLUE accent (#378ADD). This file
+   re-skins the plugin's .ac-* UI to the TSA design system (blush/rose/ink)
+   WITHOUT editing the plugin. Loaded after the plugin's configurator.css
+   (depends on 'ac-configurator'); selectors are scoped to #ac-configurator
+   so they reliably win over the plugin's equal-specificity rules.
+   Requires tsa-tokens.css for the --tsa-* / --* variables.
+   ============================================================================= */
+
+/* ---- Step progress: active pill + dot ----------------------------------- */
+#ac-configurator .ac-step-pill.active { background: var(--tsa-pink-soft); border-color: var(--tsa-pink); font-weight: 700; }
+#ac-configurator .ac-step-pill.active .ac-step-dot { background: var(--tsa-pink); }
+#ac-configurator .ac-step-pill.done { color: var(--tsa-rose-text); }
+#ac-configurator .ac-step-pill.done .ac-step-dot { background: var(--tsa-rose); }
+
+/* ---- Primary "Next" action -> brand blush button ------------------------ */
+#ac-configurator .ac-btn-next {
+  background: var(--tsa-pink);
+  color: var(--tsa-ink);
+  box-shadow: var(--shadow-action);
+  font-weight: 900;
+  border-radius: var(--radius-pill);
+}
+#ac-configurator .ac-btn-next:hover { background: var(--tsa-pink-deep); transform: var(--lift); }
+#ac-configurator .ac-btn-next:disabled { opacity: .5; transform: none; }
+
+/* ---- Selected cards (garment / design / placement) ---------------------- */
+#ac-configurator .ac-card.selected,
+#ac-configurator .ac-placement-card.selected,
+#ac-configurator .ac-design-card.selected {
+  border: 2px solid var(--tsa-rose);   /* deeper pink reads on the soft-pink fill */
+  background: var(--tsa-pink-soft);
+}
+
+/* ---- Active tabs / mode toggle / category pills -------------------------- */
+#ac-configurator .ac-zone-tab.active,
+#ac-configurator .ac-mode-btn.active,
+#ac-configurator .ac-cat-pill.active {
+  background: var(--tsa-pink);
+  color: var(--tsa-ink);
+  border-color: var(--tsa-pink);
+}
+#ac-configurator .ac-zone-tab.done { border-color: var(--tsa-rose); color: var(--tsa-rose-text); }
+
+/* ---- Selected-zone summary + active drop zone --------------------------- */
+#ac-configurator .ac-zone-selected { background: var(--tsa-pink-soft); border-color: var(--tsa-pink); }
+#ac-configurator .ac-drop-zone--active { border-color: var(--tsa-rose); background: var(--tsa-pink-soft); }
+
+/* ---- Links ------------------------------------------------------------- */
+#ac-configurator .ac-link,
+#ac-configurator .ac-link-btn { color: var(--tsa-rose-text); }
+
+/* ---- Inputs: rose focus to match the rest of the site ------------------- */
+#ac-configurator .ac-search:focus,
+#ac-configurator .ac-qty-table input:focus {
+  outline: none;
+  border-color: var(--brand-rose);
+  box-shadow: 0 0 0 3px rgba(217,135,137,.18);
+}
+
+/* ---- Bulk-tier badge: keep it brand-warm -------------------------------- */
+#ac-configurator .ac-tier-badge { background: var(--tsa-pink-soft); color: var(--tsa-rose-text); }
+
+/* ---- Two-pane layout (v1.0.23) brand accents ---- */
+#ac-configurator .ac-num { background: var(--tsa-pink); color: var(--tsa-ink); }
+#ac-configurator .ac-change { color: var(--tsa-rose-text); }
+#ac-configurator .ac-change:hover { color: var(--tsa-rose); }
+#ac-configurator .ac-swatch2.selected { border: 2px solid var(--tsa-rose); box-shadow: 0 0 0 2px #fff inset; }
+#ac-configurator .ac-stepper button:hover:not(:disabled) { background: var(--tsa-pink-soft); }
+#ac-configurator .ac-section2 { border-color: var(--border); }
+#ac-configurator .ac-order-total strong { color: var(--tsa-ink); }

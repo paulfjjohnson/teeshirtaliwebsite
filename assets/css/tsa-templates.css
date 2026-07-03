@@ -1,0 +1,229 @@
+/*
+ * TSA Templates CSS
+ * Extra styles loaded only on specific page templates.
+ * Enqueued by inc/page-store-link.php when relevant templates are active.
+ * Version: 2.0.0
+ */
+
+/* ═══════════════════════════════════════════════════════
+   CATALOG FILTER JS INTERACTION
+═══════════════════════════════════════════════════════ */
+.tsa-brand-card[data-hidden],
+.tsa-design-card[data-hidden] {
+    display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORM ANIMATIONS
+═══════════════════════════════════════════════════════ */
+.tsa-project-type.selected {
+    border-color: var(--tsa-pink);
+    background: var(--tsa-pink-soft);
+    transform: scale(1.02);
+}
+
+/* ═══════════════════════════════════════════════════════
+   STORE LINK META BOX ADMIN STYLES
+   (Loaded inline in admin via tsa_admin_styles)
+═══════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════
+   START A PROJECT PAGE
+═══════════════════════════════════════════════════════ */
+.tsa-project-intro {
+    max-width: 680px;
+    margin: 0 auto 48px;
+    text-align: center;
+}
+.tsa-project-intro h1 {
+    font-size: clamp(38px, 6vw, 64px);
+    line-height: .95;
+    letter-spacing: -2px;
+    margin-bottom: 18px;
+}
+.tsa-project-intro p {
+    font-size: 19px;
+    color: var(--tsa-muted);
+    line-height: 1.55;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CONTACT / START A PROJECT FORM
+═══════════════════════════════════════════════════════ */
+.tsa-form-wrap .wpcf7-form label,
+.tsa-form-wrap .gform_wrapper label,
+.tsa-form-wrap .wpforms-field label {
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+    display: block;
+    color: var(--tsa-dark);
+}
+
+.tsa-form-wrap .wpcf7-form input[type="text"],
+.tsa-form-wrap .wpcf7-form input[type="email"],
+.tsa-form-wrap .wpcf7-form input[type="tel"],
+.tsa-form-wrap .wpcf7-form textarea,
+.tsa-form-wrap .wpcf7-form select,
+.tsa-form-wrap .gform_wrapper input[type="text"],
+.tsa-form-wrap .gform_wrapper input[type="email"],
+.tsa-form-wrap .gform_wrapper input[type="tel"],
+.tsa-form-wrap .gform_wrapper textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border-strong);    /* design-system token */
+    border-radius: var(--radius-md);           /* 22px — design-system field radius */
+    font-size: 15px;
+    background: #fff;
+    color: var(--tsa-dark);
+    transition: border-color .2s, box-shadow .2s;
+    margin-bottom: 18px;
+}
+.tsa-form-wrap .wpcf7-form input:focus,
+.tsa-form-wrap .wpcf7-form textarea:focus,
+.tsa-form-wrap .gform_wrapper input:focus,
+.tsa-form-wrap .gform_wrapper textarea:focus {
+    outline: none;
+    border-color: var(--brand-rose);           /* rose focus per design system */
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(217,135,137,.18);
+}
+
+.tsa-form-wrap .wpcf7-submit,
+.tsa-form-wrap input[type="submit"],
+.tsa-form-wrap .gform_button {
+    background: var(--tsa-dark) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 999px !important;
+    padding: 16px 36px !important;
+    font-weight: 900 !important;
+    font-size: 14px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .4px !important;
+    cursor: pointer !important;
+    transition: opacity .2s !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+}
+.tsa-form-wrap .wpcf7-submit:hover,
+.tsa-form-wrap input[type="submit"]:hover { opacity: .85 !important; }
+
+/* ═══════════════════════════════════════════════════════
+   PORTAL — WOOCOMMERCE MY ACCOUNT INSIDE PORTAL CARD
+═══════════════════════════════════════════════════════ */
+.tsa-portal-card .woocommerce-MyAccount-navigation { display: none; }
+
+.tsa-portal-card .woocommerce-MyAccount-content {
+    padding: 0;
+}
+
+.tsa-portal-card .woocommerce table.shop_table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+}
+.tsa-portal-card .woocommerce table.shop_table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--tsa-muted);
+    font-weight: 700;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--tsa-line);
+    text-align: left;
+}
+.tsa-portal-card .woocommerce table.shop_table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--tsa-line);
+    color: var(--tsa-dark);
+}
+.tsa-portal-card .woocommerce table.shop_table tr:last-child td { border-bottom: none; }
+.tsa-portal-card .woocommerce table.shop_table tr:hover td { background: var(--tsa-pink-soft); }
+
+/* View order button */
+.tsa-portal-card .woocommerce .button,
+.tsa-portal-card .woocommerce a.button {
+    background: var(--tsa-dark);
+    color: #fff;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    border: none;
+    transition: opacity .2s;
+}
+.tsa-portal-card .woocommerce .button:hover { opacity: .85; color: #fff; }
+
+/* Order status pills */
+.tsa-portal-card mark.order-status {
+    background: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+.tsa-portal-card mark.order-status.status-completed { background: rgba(34,197,94,.1); color: #16a34a; }
+.tsa-portal-card mark.order-status.status-processing { background: rgba(59,130,246,.1); color: #2563eb; }
+.tsa-portal-card mark.order-status.status-on-hold { background: rgba(245,158,11,.1); color: #d97706; }
+.tsa-portal-card mark.order-status.status-pending { background: rgba(107,114,128,.1); color: #6b7280; }
+.tsa-portal-card mark.order-status.status-cancelled { background: rgba(239,68,68,.1); color: #dc2626; }
+
+/* ═══════════════════════════════════════════════════════
+   DESIGN LIBRARY — SEARCH INTERACTION
+═══════════════════════════════════════════════════════ */
+#tsa-design-search {
+    transition: border-color .2s, box-shadow .2s;
+}
+#tsa-design-search:focus {
+    outline: none;
+    border-color: var(--tsa-pink);
+    box-shadow: 0 0 0 3px rgba(254,194,192,.25);
+    background: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BRAND CATALOG — STYLE CARD HOVER
+═══════════════════════════════════════════════════════ */
+.tsa-style-card:hover .tsa-style-card__body .tsa-btn {
+    background: var(--tsa-pink);
+    color: var(--tsa-dark);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SERVICE PAGE — PROCESS CONNECTOR FIX (mobile)
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .tsa-process-step::after { display: none; }
+    .tsa-process { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — TEMPLATE SPECIFICS
+═══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+    .tsa-quote-hero { grid-template-columns: 1fr; }
+    .tsa-form-wrap { padding: 28px 20px; }
+    .tsa-project-types { grid-template-columns: repeat(3, 1fr); }
+    .tsa-portal-body { grid-template-columns: 1fr; }
+    .tsa-portal-nav {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-radius: 14px;
+    }
+    .tsa-portal-nav a { border-bottom: none; border-right: 1px solid var(--tsa-line); font-size: 12px; padding: 12px 10px; text-align: center; flex-direction: column; gap: 4px; }
+    .tsa-portal-nav a:last-child { border-right: none; }
+    .tsa-portal-stats { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .tsa-project-types { grid-template-columns: repeat(2, 1fr); }
+    .tsa-portal-nav { grid-template-columns: repeat(2, 1fr); }
+    .tsa-portal-stats { grid-template-columns: 1fr; }
+}

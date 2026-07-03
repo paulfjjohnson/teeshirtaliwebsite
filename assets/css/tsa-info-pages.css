@@ -1,0 +1,303 @@
+/* =============================================================================
+   Tee Shirt Ali — Info / Utility / Legal Pages
+   Shared styling for Contact, FAQ, Sizing Guide, Printing Capabilities,
+   Turnaround Times, and the legal pages (Privacy, Terms, Shipping, Returns).
+   Token-driven (tsa-tokens.css loads sitewide @25). Reuses global .tsa-btn
+   and .tsa-kicker from style.css. Scoped under .tsa-ip-* so it can't bleed.
+   ============================================================================= */
+
+/* ---- Page hero ----------------------------------------------------------- */
+.tsa-ip-hero {
+  background: var(--wash-hero);
+  padding: clamp(60px, 9vw, 110px) var(--gutter) clamp(40px, 6vw, 70px);
+  text-align: center;
+}
+.tsa-ip-hero__inner { max-width: var(--measure-max); margin: 0 auto; }
+.tsa-ip-hero h1 {
+  margin: 14px 0 0;
+  font-size: var(--text-display);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+}
+.tsa-ip-hero__sub {
+  margin: 18px auto 0;
+  max-width: 620px;
+  font-size: var(--text-lead);
+  line-height: var(--leading-body);
+  color: var(--text-muted);
+}
+.tsa-ip-hero__meta {
+  margin-top: 18px;
+  font-size: var(--text-meta);
+  color: var(--text-muted);
+  font-weight: var(--weight-bold);
+}
+
+/* ---- Content shell ------------------------------------------------------- */
+.tsa-ip-wrap {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: clamp(48px, 7vw, 84px) var(--gutter);
+}
+.tsa-ip-wrap--narrow { max-width: 860px; }
+.tsa-ip-section { margin-bottom: clamp(40px, 6vw, 72px); }
+.tsa-ip-section:last-child { margin-bottom: 0; }
+.tsa-ip-section-head { max-width: var(--measure-max); margin: 0 0 28px; }
+.tsa-ip-section-head h2 {
+  margin: 12px 0 0;
+  font-size: var(--text-h2);
+  color: var(--text-primary);
+}
+.tsa-ip-section-head p {
+  margin: 12px 0 0;
+  font-size: var(--text-body);
+  color: var(--text-muted);
+}
+
+/* ---- Long-form prose (legal pages) -------------------------------------- */
+.tsa-ip-prose { color: var(--text-primary); font-size: var(--text-body); line-height: var(--leading-body); }
+.tsa-ip-prose h2 {
+  margin: 40px 0 14px;
+  font-size: var(--text-h3);
+  color: var(--text-primary);
+}
+.tsa-ip-prose h2:first-child { margin-top: 0; }
+.tsa-ip-prose h3 {
+  margin: 28px 0 10px;
+  font-size: var(--text-h4);
+  color: var(--text-primary);
+}
+.tsa-ip-prose p { margin: 0 0 16px; color: var(--text-muted); }
+.tsa-ip-prose ul, .tsa-ip-prose ol { margin: 0 0 16px; padding-left: 22px; color: var(--text-muted); }
+.tsa-ip-prose li { margin: 0 0 8px; }
+.tsa-ip-prose a { color: var(--brand-rose); text-decoration: underline; text-underline-offset: 2px; }
+.tsa-ip-prose strong { color: var(--text-primary); }
+.tsa-ip-prose hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+
+/* ---- Table of contents (legal pages) ------------------------------------ */
+.tsa-ip-toc {
+  background: var(--surface-tint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 22px 26px;
+  margin: 0 0 40px;
+}
+.tsa-ip-toc h2 {
+  margin: 0 0 12px;
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-muted);
+}
+.tsa-ip-toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 36px; }
+.tsa-ip-toc li { margin: 0 0 6px; }
+.tsa-ip-toc a { color: var(--text-primary); text-decoration: none; }
+.tsa-ip-toc a:hover { color: var(--brand-rose); }
+@media (max-width: 640px) { .tsa-ip-toc ol { columns: 1; } }
+
+/* ---- FAQ accordion (native <details>) ----------------------------------- */
+.tsa-ip-faq { display: grid; gap: 14px; }
+.tsa-ip-faq__cat {
+  margin: 36px 0 4px;
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-kicker);
+  color: var(--brand-rose);
+  font-weight: var(--weight-black);
+}
+.tsa-ip-faq__cat:first-child { margin-top: 0; }
+.tsa-ip-faq details {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+.tsa-ip-faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 20px 56px 20px 24px;
+  position: relative;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+.tsa-ip-faq summary::-webkit-details-marker { display: none; }
+.tsa-ip-faq summary::after {
+  content: "+";
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--brand-rose);
+  transition: transform var(--transition);
+}
+.tsa-ip-faq details[open] summary::after { content: "\2013"; }
+.tsa-ip-faq__a {
+  padding: 0 24px 22px;
+  color: var(--text-muted);
+  line-height: var(--leading-body);
+}
+.tsa-ip-faq__a p { margin: 0 0 12px; }
+.tsa-ip-faq__a p:last-child { margin: 0; }
+.tsa-ip-faq__a a { color: var(--brand-rose); text-decoration: underline; }
+
+/* ---- Generic info card grid --------------------------------------------- */
+.tsa-ip-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-6);
+}
+.tsa-ip-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--pad-card);
+}
+.tsa-ip-card__icon { font-size: 32px; line-height: 1; }
+.tsa-ip-card h3 { margin: 14px 0 8px; font-size: var(--text-h4); color: var(--text-primary); }
+.tsa-ip-card p { margin: 0; color: var(--text-muted); line-height: var(--leading-body); }
+.tsa-ip-card ul { margin: 12px 0 0; padding-left: 18px; color: var(--text-muted); }
+.tsa-ip-card li { margin: 0 0 6px; }
+
+/* ---- Data table (sizing / turnaround) ----------------------------------- */
+.tsa-ip-table-wrap { overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border); }
+.tsa-ip-table { width: 100%; border-collapse: collapse; min-width: 520px; background: var(--surface-card); }
+.tsa-ip-table caption {
+  caption-side: top;
+  text-align: left;
+  padding: 16px 18px;
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  background: var(--surface-tint);
+}
+.tsa-ip-table th, .tsa-ip-table td {
+  padding: 13px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+.tsa-ip-table thead th {
+  background: var(--tsa-ink);
+  color: var(--tsa-white);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+.tsa-ip-table tbody tr:nth-child(even) { background: var(--surface-tint); }
+.tsa-ip-table tbody tr:last-child td { border-bottom: 0; }
+
+/* ---- Contact layout ------------------------------------------------------ */
+.tsa-ip-contact {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: start;
+}
+@media (max-width: 820px) { .tsa-ip-contact { grid-template-columns: 1fr; } }
+.tsa-ip-methods { display: grid; gap: 16px; }
+.tsa-ip-method {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-xs);
+}
+.tsa-ip-method__icon { font-size: 26px; line-height: 1; }
+.tsa-ip-method h3 { margin: 0 0 4px; font-size: var(--text-h4); color: var(--text-primary); }
+.tsa-ip-method p { margin: 0; color: var(--text-muted); }
+.tsa-ip-method a { color: var(--brand-rose); }
+
+/* Contact form card */
+.tsa-ip-formcard {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: clamp(24px, 4vw, 40px);
+}
+.tsa-ip-field { margin-bottom: 18px; }
+.tsa-ip-field label {
+  display: block;
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  margin-bottom: 7px;
+}
+.tsa-ip-input, .tsa-ip-select, .tsa-ip-textarea {
+  width: 100%;
+  padding: 13px 15px;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--tsa-white);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.tsa-ip-textarea { min-height: 140px; resize: vertical; }
+.tsa-ip-input:focus, .tsa-ip-select:focus, .tsa-ip-textarea:focus {
+  outline: none;
+  border-color: var(--brand-rose);
+  box-shadow: 0 0 0 3px rgba(217, 135, 137, .18);
+}
+.tsa-ip-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 560px) { .tsa-ip-row { grid-template-columns: 1fr; } }
+
+/* ---- Closing CTA band ---------------------------------------------------- */
+.tsa-ip-cta { background: var(--wash-cta); padding: clamp(48px, 7vw, 84px) var(--gutter); }
+.tsa-ip-cta__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.tsa-ip-cta h2 { margin: 0; font-size: var(--text-h2); color: var(--tsa-white); }
+.tsa-ip-cta p { margin: 10px 0 0; color: var(--text-on-dark-muted); max-width: 520px; }
+.tsa-ip-cta__actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* ---- Small helpers ------------------------------------------------------- */
+.tsa-ip-note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: var(--surface-tint);
+  border-left: 3px solid var(--brand-rose);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin: 24px 0 0;
+}
+
+/* ---- About page helpers ------------------------------------------------- */
+.tsa-about-story { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: clamp(28px, 5vw, 64px); align-items: start; }
+@media (max-width: 820px) { .tsa-about-story { grid-template-columns: 1fr; gap: 18px; } }
+.tsa-about-story h2 { margin: 12px 0 0; font-size: var(--text-h2); color: var(--text-primary); }
+.tsa-about-story__body p { margin: 0 0 16px; color: var(--text-muted); font-size: var(--text-body); line-height: var(--leading-body); }
+.tsa-about-story__body p:last-child { margin-bottom: 0; }
+
+.tsa-about-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 680px) { .tsa-about-stats { grid-template-columns: repeat(2, 1fr); } }
+.tsa-about-stat {
+  background: var(--surface-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+  padding: 26px 18px; text-align: center;
+}
+.tsa-about-stat__num { font-size: clamp(30px, 5vw, 46px); font-weight: var(--weight-black); color: var(--brand-rose); line-height: 1; letter-spacing: -1px; }
+.tsa-about-stat__label { display: block; margin-top: 8px; font-size: var(--text-meta); color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+
+.tsa-about-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; border-radius: 12px;
+  background: var(--surface-tint); color: var(--brand-rose);
+}
+.tsa-about-ico svg { width: 22px; height: 22px; }

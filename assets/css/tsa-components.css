@@ -1,0 +1,79 @@
+/* =============================================================================
+   Tee Shirt Ali — Component Classes (ADDITIVE layer)
+   --------------------------------------------------------------------------
+   Layer 2 reconciliation (Jun 2026):
+   The base primitives — .tsa-btn (+primary/dark/outline/white/gold/
+   outline-white/sm/lg), .tsa-card (+--dark/--pink), .tsa-kicker
+   (+--light/--gold/--pink/--green), .tsa-pill (+--active/--pink), .tsa-section
+   (+--sm/--lg), .tsa-section-head (+--left), .tsa-grid-3/.tsa-grid-4 — already
+   live in the theme's style.css (the richer set every template uses). To keep a
+   SINGLE source of truth and avoid duplicate/conflicting definitions, those base
+   classes were removed from this file.
+
+   This file now ships ONLY the design-system primitives style.css lacks:
+   wordmark, form fields, extra card variants (hover/tint/feature), two extra
+   button variants (ghost/block), a generic wrapper, and the hero/CTA/feature
+   background washes — all needed for the Layer 3 screens.
+
+   Requires tsa-tokens.css first (for the --tsa-* / --* variables).
+   ============================================================================= */
+
+/* ---- Wordmark / logotype (NEW) ------------------------------------------- */
+.tsa-wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: 24px;
+  letter-spacing: .3px;
+  color: var(--text-primary);
+  line-height: 1;
+  white-space: nowrap;
+}
+.tsa-wordmark .tsa-wordmark-accent { color: var(--brand-rose); }
+/* On dark surfaces: <span class="tsa-wordmark tsa-on-dark"> */
+.tsa-wordmark.tsa-on-dark { color: #fff; }
+
+/* ---- Button: additive variants (base .tsa-btn lives in style.css) -------- */
+.tsa-btn-ghost { background: transparent; color: var(--text-primary); }
+.tsa-btn-block { width: 100%; }
+
+/* ---- Card: additive variants (base .tsa-card lives in style.css) --------- */
+/* Opt-in hover lift for any .tsa-card that should react to pointer. */
+.tsa-card-hover { transition: transform var(--transition), box-shadow var(--transition); }
+.tsa-card-hover:hover { transform: var(--lift); box-shadow: var(--shadow-lg); }
+/* Soft pink tinted surface. */
+.tsa-card-tint { background: var(--surface-tint); }
+/* Plum->purple feature surface (e.g. "Now Live" store banner). */
+.tsa-card-feature { background: var(--wash-feature); color: #fff; border-color: transparent; }
+
+/* ---- Section head: left-aligned helper (base lives in style.css) --------- */
+/* style.css provides .tsa-section-head--left; this token-based alias matches
+   the design-system reference markup. */
+.tsa-section-head.tsa-align-left { margin: 0; text-align: left; align-items: flex-start; }
+
+/* ---- Form fields (NEW - used by the Start-a-Project / quote builder) ------ */
+.tsa-field { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.tsa-label { font-family: var(--font-display); font-weight: var(--weight-black); font-size: var(--text-meta); color: var(--text-primary); }
+.tsa-input, .tsa-select, .tsa-textarea {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  outline: none;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.tsa-input:focus, .tsa-select:focus, .tsa-textarea:focus {
+  border-color: var(--brand-rose);
+  box-shadow: 0 0 0 3px rgba(217,135,137,.18);
+}
+.tsa-hint { font-size: var(--text-sm); color: var(--text-muted); }
+
+/* ---- Layout / background washes (NEW; complements style.css helpers) ------ */
+.tsa-wrap { max-width: var(--content-max); margin: 0 auto; }
+.tsa-bg-tint { background: var(--surface-tint); }
+.tsa-bg-hero { background: var(--wash-hero); }
+.tsa-bg-cta  { background: var(--wash-cta); color: #fff; }
+.tsa-bg-feature { background: var(--wash-feature); color: #fff; }
