@@ -26,6 +26,49 @@ function tsa_school_levels(): array {
 }
 
 /**
+ * The 5 store types the plugin's native "Store Details" box already allows
+ * (class-cpt-store.php save_meta()). Single source of truth for the Builder's
+ * type dropdown so the two screens can never drift out of sync on valid values.
+ */
+function tsa_sb_type_choices(): array {
+    return [
+        'school'   => 'School',
+        'team'     => 'Team',
+        'business' => 'Business',
+        'event'    => 'Event',
+        'main'     => 'TSA Main',
+    ];
+}
+
+/**
+ * Per-type provisioning metadata: the URL base segment (/<base>/<slug>/),
+ * the section's display label, and its directory-listing page template
+ * (empty when none exists yet — caller must not assign a template in that
+ * case, not guess one). Unknown types fall back to school's config so
+ * provisioning never errors on a bad value.
+ */
+function tsa_sb_type_meta( string $type ): array {
+    $map = [
+        'school'   => [ 'base' => 'schools',  'label' => 'Schools',  'directory_template' => 'template-school-directory.php' ],
+        'team'     => [ 'base' => 'teams',    'label' => 'Teams',    'directory_template' => 'template-team-directory.php' ],
+        'business' => [ 'base' => 'business', 'label' => 'Business', 'directory_template' => 'template-business-directory.php' ],
+        'event'    => [ 'base' => 'events',   'label' => 'Events',   'directory_template' => '' ],
+        'main'     => [ 'base' => 'schools',  'label' => 'Schools',  'directory_template' => 'template-school-directory.php' ],
+    ];
+    return $map[ $type ] ?? $map['school'];
+}
+
+/**
+ * Derive the plugin's legacy "Active" flag (_ac_is_active) from the Builder's
+ * richer 3-state Status field, so admins only ever set one status, not two.
+ * Hidden = inactive (configurator should error if visited); live/coming-soon
+ * (and anything unrecognized) = active.
+ */
+function tsa_sb_active_from_status( string $status ): string {
+    return $status === 'hidden' ? '0' : '1';
+}
+
+/**
  * All school store records (configurator_store, type=school), normalized for
  * the directory + color map. Excludes 'hidden' stores. Cached per request.
  */
@@ -62,6 +105,41 @@ function tsa_school_store_records(): array {
         ];
     }
     return $cache;
+}
+
+/**
+ * Every store record (any type), normalized for the Builder's admin table.
+ * Unlike tsa_school_store_records() this is NOT filtered to type=school and
+ * is NOT used by any front-end directory — admin listing only.
+ */
+function tsa_all_store_records(): array {
+    $records = [];
+    $posts   = get_posts( [
+        'post_type'   => 'configurator_store',
+        'post_status' => 'publish',
+        'numberposts' => -1,
+        'orderby'     => 'title',
+        'order'       => 'ASC',
+    ] );
+
+    foreach ( $posts as $p ) {
+        $slug = sanitize_title( get_post_meta( $p->ID, '_ac_store_slug', true ) ?: $p->post_name );
+        if ( ! $slug ) continue;
+        $type   = get_post_meta( $p->ID, '_tsa_store_type', true ) ?: 'school';
+        $status = get_post_meta( $p->ID, '_tsa_homepage_status', true ) ?: 'coming-soon';
+        $base   = tsa_sb_type_meta( $type )['base'];
+
+        $records[] = [
+            'post_id' => $p->ID,
+            'name'    => $p->post_title,
+            'slug'    => $slug,
+            'type'    => $type,
+            'status'  => in_array( $status, [ 'live', 'coming-soon', 'hidden' ], true ) ? $status : 'coming-soon',
+            'mascot'  => get_post_meta( $p->ID, '_tsa_school_mascot', true ),
+            'url'     => '/' . $base . '/' . $slug . '/',
+        ];
+    }
+    return $records;
 }
 
 /**
@@ -118,6 +196,18 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
     if ( $hook === 'toplevel_page_tsa-store-builder' ) wp_enqueue_media();
 } );
 
+/**
+ * Hide the native "Stores" post-type screen from the admin menu — the Store
+ * Builder is now the one entry point. This only removes the MENU ITEM (a
+ * theme-level admin_menu hook); it does NOT touch the plugin's CPT
+ * registration, so moneyoverbs.com (which runs the same plugin) is
+ * unaffected. The screen itself still works and is still reachable — see
+ * the "Manage apparel & drops" link in tsa_sb_render_existing().
+ */
+add_action( 'admin_menu', function () {
+    remove_submenu_page( 'apparel-configurator', 'edit.php?post_type=configurator_store' );
+}, 999 );
+
 /** Known Ascension brand-guide colors for the prefill helper (name → [primary, secondary]). */
 function tsa_sb_brand_guide_map(): array {
     return [
@@ -134,9 +224,9 @@ function tsa_store_builder_page(): void {
 
     $result = null;
     $form   = [
-        'name' => '', 'slug' => '', 'mascot' => '', 'level' => 'High Schools',
+        'name' => '', 'slug' => '', 'type' => 'school', 'mascot' => '', 'level' => 'High Schools',
         'status' => 'coming-soon', 'spotlight' => 0,
-        'primary' => '', 'secondary' => '', 'logo_id' => 0, 'tagline' => '',
+        'primary' => '', 'secondary' => '', 'logo_id' => 0, 'tagline' => '', 'description' => '',
         'ticker' => '',
         'pickups' => '', 'shipping' => 0, 'contact_email' => '',
         'programs' => [],
@@ -195,7 +285,6 @@ function tsa_store_builder_page(): void {
 
         <form method="post" style="max-width:920px;margin-top:14px">
             <?php wp_nonce_field( 'tsa_sb_build', 'tsa_sb_nonce' ); ?>
-            <input type="hidden" name="tsa_store_type" value="school">
             <input type="hidden" name="tsa_sb_edit_id" value="<?php echo esc_attr( $editing_id ); ?>">
 
             <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:start">
@@ -203,14 +292,20 @@ function tsa_store_builder_page(): void {
                 <div>
                     <h2 class="title" style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#555">Identity</h2>
                     <table class="form-table"><tbody>
-                        <tr><th><label for="tsa_sb_name">School name</label></th>
+                        <tr><th><label for="tsa_sb_type">Store type</label></th>
+                            <td><select name="tsa_sb_type" id="tsa_sb_type">
+                                <?php foreach ( tsa_sb_type_choices() as $tk => $tl ) : ?>
+                                <option value="<?php echo esc_attr( $tk ); ?>" <?php selected( $form['type'], $tk ); ?>><?php echo esc_html( $tl ); ?></option>
+                                <?php endforeach; ?>
+                            </select></td></tr>
+                        <tr><th><label for="tsa_sb_name">Name</label></th>
                             <td><input name="tsa_sb_name" id="tsa_sb_name" type="text" class="regular-text" value="<?php echo esc_attr( $form['name'] ); ?>" placeholder="Dutchtown High School" required></td></tr>
                         <tr><th><label for="tsa_sb_slug">Slug</label></th>
                             <td><input name="tsa_sb_slug" id="tsa_sb_slug" type="text" class="regular-text" value="<?php echo esc_attr( $form['slug'] ); ?>" placeholder="dutchtown">
                             <p class="description">Auto-filled from the name. Used for the store, design scope, and <code>/schools/&lt;slug&gt;/</code>.</p></td></tr>
-                        <tr><th><label for="tsa_sb_mascot">Mascot</label></th>
+                        <tr data-school-only="1"><th><label for="tsa_sb_mascot">Mascot</label></th>
                             <td><input name="tsa_sb_mascot" id="tsa_sb_mascot" type="text" class="regular-text" value="<?php echo esc_attr( $form['mascot'] ); ?>" placeholder="Griffins"></td></tr>
-                        <tr><th><label for="tsa_sb_level">Level</label></th>
+                        <tr data-school-only="1"><th><label for="tsa_sb_level">Level</label></th>
                             <td><select name="tsa_sb_level" id="tsa_sb_level">
                                 <?php foreach ( $levels as $lv ) : ?>
                                 <option value="<?php echo esc_attr( $lv ); ?>" <?php selected( $form['level'], $lv ); ?>><?php echo esc_html( $lv ); ?></option>
@@ -237,6 +332,9 @@ function tsa_store_builder_page(): void {
                             </td></tr>
                         <tr><th><label for="tsa_sb_tagline">Tagline</label></th>
                             <td><input name="tsa_sb_tagline" id="tsa_sb_tagline" type="text" class="regular-text" value="<?php echo esc_attr( $form['tagline'] ); ?>" placeholder="Home of the Griffins"></td></tr>
+                        <tr><th><label for="tsa_sb_description">Description</label></th>
+                            <td><textarea name="tsa_sb_description" id="tsa_sb_description" rows="3" class="large-text"><?php echo esc_textarea( $form['description'] ); ?></textarea>
+                            <p class="description">Internal note about this store — was previously only on the native Stores screen.</p></td></tr>
                         <tr><th><label for="tsa_sb_ticker">Ticker items</label></th>
                             <td><textarea name="tsa_sb_ticker" id="tsa_sb_ticker" rows="4" class="large-text code" placeholder="Official Merch&#10;Drops on Schedule&#10;Performance First"><?php echo esc_textarea( $form['ticker'] ); ?></textarea>
                             <p class="description">One phrase per line — scrolls across the homepage hero banner. Leave blank to use the default TSA ticker.</p></td></tr>
@@ -249,6 +347,7 @@ function tsa_store_builder_page(): void {
                             </td></tr>
                     </tbody></table>
 
+                    <div data-school-only="1">
                     <h2 class="title" style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#555">Delivery &amp; contact</h2>
                     <table class="form-table"><tbody>
                         <tr><th><label for="tsa_sb_pickups">Pickup location(s)</label></th>
@@ -260,7 +359,9 @@ function tsa_store_builder_page(): void {
                             <td><input name="tsa_sb_email" id="tsa_sb_email" type="email" class="regular-text" value="<?php echo esc_attr( $form['contact_email'] ); ?>" placeholder="coach@school.org">
                             <p class="description">Optional. Used later for fundraiser/notification routing.</p></td></tr>
                     </tbody></table>
+                    </div>
 
+                    <div data-school-only="1">
                     <h2 class="title" style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#555">Programs <span style="text-transform:none;font-weight:400;color:#888">(optional — Band, Football, Color Guard…)</span></h2>
                     <p class="description" style="margin:0 0 8px">Each program becomes a design category for this school and a card on the programs hub. Live programs link to the school's designs filtered to that program.</p>
                     <table class="widefat" id="tsa-sb-programs" style="max-width:560px;margin-bottom:8px"><tbody>
@@ -278,6 +379,7 @@ function tsa_store_builder_page(): void {
                         <?php endforeach; ?>
                     </tbody></table>
                     <button type="button" class="button button-small" id="tsa-sb-add-prog">+ Add program</button>
+                    </div>
 
                     <p class="submit">
                         <button type="submit" name="tsa_sb_submit" value="build" class="button button-primary button-hero">🏫 Build school store</button>
@@ -361,6 +463,17 @@ function tsa_store_builder_page(): void {
         [mascot,tagline,status,slug,prim,sec].forEach(function(el){ el && el.addEventListener('input', paint); });
         paint();
 
+        // Store type — show/hide school-only sections.
+        var typeSel = document.getElementById('tsa_sb_type');
+        function syncType(){
+            var isSchool = !typeSel || typeSel.value === 'school';
+            document.querySelectorAll('[data-school-only]').forEach(function(el){
+                el.style.display = isSchool ? '' : 'none';
+            });
+        }
+        if (typeSel) typeSel.addEventListener('change', syncType);
+        syncType();
+
         // Media logo picker
         var btn = document.getElementById('tsa_sb_logo_btn'),
             clr = document.getElementById('tsa_sb_logo_clear'),
@@ -416,10 +529,12 @@ function tsa_sb_read_form(): array {
     }
     $hex = function ( $v, $d ) { $v = sanitize_text_field( wp_unslash( $v ) ); return preg_match( '/^#[0-9a-fA-F]{6}$/', $v ) ? $v : $d; };
     $status = sanitize_key( $_POST['tsa_sb_status'] ?? 'coming-soon' );
+    $type   = sanitize_key( $_POST['tsa_sb_type'] ?? 'school' );
     return [
         'name'          => $name,
         'slug'          => $slug,
         'edit_id'       => absint( $_POST['tsa_sb_edit_id'] ?? 0 ),
+        'type'          => array_key_exists( $type, tsa_sb_type_choices() ) ? $type : 'school',
         'mascot'        => sanitize_text_field( wp_unslash( $_POST['tsa_sb_mascot'] ?? '' ) ),
         'level'         => sanitize_text_field( wp_unslash( $_POST['tsa_sb_level'] ?? 'High Schools' ) ),
         'status'        => in_array( $status, [ 'live', 'coming-soon', 'hidden' ], true ) ? $status : 'coming-soon',
@@ -428,6 +543,7 @@ function tsa_sb_read_form(): array {
         'secondary'     => $hex( $_POST['tsa_sb_secondary'] ?? '', '#C7C9C8' ),
         'logo_id'       => absint( $_POST['tsa_sb_logo_id'] ?? 0 ),
         'tagline'       => sanitize_text_field( wp_unslash( $_POST['tsa_sb_tagline'] ?? '' ) ),
+        'description'   => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_description'] ?? '' ) ),
         'ticker'        => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_ticker'] ?? '' ) ),
         'pickups'       => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_pickups'] ?? '' ) ),
         'shipping'      => isset( $_POST['tsa_sb_shipping'] ) ? 1 : 0,
@@ -441,6 +557,7 @@ function tsa_sb_form_from_store( int $store_id ): array {
     return [
         'name'          => get_the_title( $store_id ),
         'slug'          => sanitize_title( get_post_meta( $store_id, '_ac_store_slug', true ) ?: get_post_field( 'post_name', $store_id ) ),
+        'type'          => get_post_meta( $store_id, '_tsa_store_type', true ) ?: 'school',
         'mascot'        => get_post_meta( $store_id, '_tsa_school_mascot', true ),
         'level'         => get_post_meta( $store_id, '_tsa_school_level', true ) ?: 'High Schools',
         'status'        => get_post_meta( $store_id, '_tsa_homepage_status', true ) ?: 'coming-soon',
@@ -449,6 +566,7 @@ function tsa_sb_form_from_store( int $store_id ): array {
         'secondary'     => get_post_meta( $store_id, '_tsa_school_secondary', true ) ?: '#C7C9C8',
         'logo_id'       => (int) get_post_thumbnail_id( $store_id ),
         'tagline'       => get_post_meta( $store_id, '_tsa_store_tagline', true ),
+        'description'   => get_post_meta( $store_id, '_ac_store_description', true ),
         'ticker'        => get_post_meta( $store_id, '_tsa_school_ticker', true ),
         'pickups'       => get_post_meta( $store_id, '_tsa_school_pickups', true ),
         'shipping'      => get_post_meta( $store_id, '_tsa_school_shipping', true ) ? 1 : 0,
@@ -513,14 +631,17 @@ function tsa_sb_build_school( array $f ): array {
     }
 
     update_post_meta( $store_id, '_ac_store_slug',        $slug );
-    update_post_meta( $store_id, '_tsa_store_type',       'school' );
-    update_post_meta( $store_id, '_ac_store_type',        'school' ); // keep both in sync
+    update_post_meta( $store_id, '_tsa_store_type',       $f['type'] );
+    update_post_meta( $store_id, '_ac_store_type',        $f['type'] ); // keep both in sync
+    update_post_meta( $store_id, '_ac_is_active',         tsa_sb_active_from_status( $f['status'] ) );
     update_post_meta( $store_id, '_tsa_homepage_status',  $f['status'] );
     update_post_meta( $store_id, '_tsa_is_spotlight',     $f['spotlight'] ? '1' : '0' );
     update_post_meta( $store_id, '_tsa_store_tagline',    $f['tagline'] );
+    update_post_meta( $store_id, '_ac_store_description', $f['description'] );
     update_post_meta( $store_id, '_tsa_school_ticker',    $f['ticker'] );
+    $base = tsa_sb_type_meta( $f['type'] )['base'];
     update_post_meta( $store_id, '_tsa_store_cta_text',   'Shop ' . $f['name'] );
-    update_post_meta( $store_id, '_tsa_store_cta_url',    '/schools/' . $slug . '/' );
+    update_post_meta( $store_id, '_tsa_store_cta_url',    '/' . $base . '/' . $slug . '/' );
     update_post_meta( $store_id, '_tsa_school_primary',   $f['primary'] );
     update_post_meta( $store_id, '_tsa_school_secondary', $f['secondary'] );
     update_post_meta( $store_id, '_tsa_school_mascot',    $f['mascot'] );
@@ -543,12 +664,12 @@ function tsa_sb_build_school( array $f ): array {
         }
     }
 
-    // ── 3. /schools/{slug}/ landing page ──
-    $parent_id = tsa_sb_ensure_schools_parent();
+    // ── 3. /{base}/{slug}/ landing page ──
+    $parent_id = tsa_sb_ensure_section_parent( $f['type'] );
     $page_id   = tsa_sb_ensure_school_page( $slug, $f['name'], $parent_id, $store_id );
     if ( $page_id ) {
-        $steps[] = sprintf( 'Landing page <a href="%s">/schools/%s/</a> ready (view <a href="%s" target="_blank">live ↗</a>).',
-            esc_url( get_edit_post_link( $page_id ) ), esc_html( $slug ), esc_url( home_url( '/schools/' . $slug . '/' ) ) );
+        $steps[] = sprintf( 'Landing page <a href="%s">/%s/%s/</a> ready (view <a href="%s" target="_blank">live ↗</a>).',
+            esc_url( get_edit_post_link( $page_id ) ), esc_html( $base ), esc_html( $slug ), esc_url( home_url( '/' . $base . '/' . $slug . '/' ) ) );
     }
 
     // ── 3b. Programs (design categories + programs hub page) ──
@@ -570,7 +691,7 @@ function tsa_sb_build_school( array $f ): array {
             '%d program%s saved (%d new design categor%s)%s.',
             count( $programs ), count( $programs ) === 1 ? '' : 's',
             $made, $made === 1 ? 'y' : 'ies',
-            $hub_id ? sprintf( ' · hub at <a href="%s" target="_blank">/schools/%s/programs/ ↗</a>', esc_url( home_url( '/schools/' . $slug . '/programs/' ) ), esc_html( $slug ) ) : ''
+            $hub_id ? sprintf( ' · hub at <a href="%s" target="_blank">/%s/%s/programs/ ↗</a>', esc_url( home_url( '/' . $base . '/' . $slug . '/programs/' ) ), esc_html( $base ), esc_html( $slug ) ) : ''
         );
     }
 
@@ -578,8 +699,8 @@ function tsa_sb_build_school( array $f ): array {
     if ( $page_id ) {
         $drops_id = tsa_sb_ensure_drops_page( $slug, $f['name'], $page_id );
         if ( $drops_id ) {
-            $steps[] = sprintf( 'Drops page <a href="%s" target="_blank">/schools/%s/drops/ ↗</a> ready — link Tee Parties to this school in the party editor.',
-                esc_url( home_url( '/schools/' . $slug . '/drops/' ) ), esc_html( $slug ) );
+            $steps[] = sprintf( 'Drops page <a href="%s" target="_blank">/%s/%s/drops/ ↗</a> ready — link Tee Parties to this store in the party editor.',
+                esc_url( home_url( '/' . $base . '/' . $slug . '/drops/' ) ), esc_html( $base ), esc_html( $slug ) );
         }
     }
 
@@ -594,7 +715,7 @@ function tsa_sb_build_school( array $f ): array {
     $steps[] = 'Cart routing + per-store delivery registered (Settings → TSA Stores).';
 
     // ── 5. Confirm directory/colors flow-through ──
-    $steps[] = sprintf( 'Appears in the <a href="%s" target="_blank">school directory</a>, color map, and request-a-store dropdown automatically.', esc_url( home_url( '/schools/' ) ) );
+    $steps[] = sprintf( 'Appears in the <a href="%s" target="_blank">%s directory</a>, color map, and request-a-store dropdown automatically.', esc_url( home_url( '/' . $base . '/' ) ), esc_html( strtolower( tsa_sb_type_meta( $f['type'] )['label'] ) ) );
 
     return [ 'verb' => $verb, 'steps' => $steps ];
 }
@@ -608,16 +729,19 @@ function tsa_sb_find_store_by_slug( string $slug ): int {
     return $q ? (int) $q[0] : 0;
 }
 
-/** Ensure the /schools/ parent page (directory) exists; return its ID. */
-function tsa_sb_ensure_schools_parent(): int {
-    $parent = get_page_by_path( 'schools' );
+/** Ensure the /<base>/ parent (directory) page for this store type exists; return its ID. */
+function tsa_sb_ensure_section_parent( string $type ): int {
+    $meta   = tsa_sb_type_meta( $type );
+    $parent = get_page_by_path( $meta['base'] );
     if ( $parent ) return (int) $parent->ID;
     $pid = wp_insert_post( [
         'post_type' => 'page', 'post_status' => 'publish',
-        'post_title' => 'Schools', 'post_name' => 'schools',
+        'post_title' => $meta['label'], 'post_name' => $meta['base'],
     ] );
     if ( $pid && ! is_wp_error( $pid ) ) {
-        update_post_meta( $pid, '_wp_page_template', 'template-school-directory.php' );
+        if ( $meta['directory_template'] ) {
+            update_post_meta( $pid, '_wp_page_template', $meta['directory_template'] );
+        }
         return (int) $pid;
     }
     return 0;
@@ -797,24 +921,26 @@ function tsa_shortcode_school_drops( $atts ): string {
     return ob_get_clean();
 }
 
-/** Small list of already-built school stores under the form. */
+/** Full store listing (every type) under the form. */
 function tsa_sb_render_existing(): void {
-    $records = tsa_school_store_records();
-    echo '<hr style="margin:28px 0"><h2>Existing school stores</h2>';
-    if ( ! $records ) { echo '<p><em>None generated yet. The directory still shows the seeded list until you build schools here.</em></p>'; return; }
-    echo '<table class="widefat striped" style="max-width:920px"><thead><tr><th>School</th><th>Slug</th><th>Status</th><th>Store</th><th>Page</th></tr></thead><tbody>';
+    $records = tsa_all_store_records();
+    echo '<hr style="margin:28px 0"><h2>All stores</h2>';
+    if ( ! $records ) { echo '<p><em>None generated yet. The directory still shows the seeded list until you build stores here.</em></p>'; return; }
+    echo '<table class="widefat striped" style="max-width:920px"><thead><tr><th>Store</th><th>Type</th><th>Slug</th><th>Status</th><th>Store</th><th>Page</th><th>Apparel &amp; drops</th></tr></thead><tbody>';
     foreach ( $records as $r ) {
         $page = get_posts( [ 'post_type' => 'page', 'name' => $r['slug'], 'numberposts' => 1, 'post_status' => 'any' ] );
         $page_link = $page ? '<a href="' . esc_url( home_url( $r['url'] ) ) . '" target="_blank">view ↗</a>' : '—';
         $edit_link = admin_url( 'admin.php?page=tsa-store-builder&tsa_sb_edit=' . $r['post_id'] );
         printf(
-            '<tr><td><strong>%s</strong>%s</td><td><code>%s</code></td><td>%s</td><td><a href="%s">edit</a></td><td>%s</td></tr>',
+            '<tr><td><strong>%s</strong>%s</td><td>%s</td><td><code>%s</code></td><td>%s</td><td><a href="%s">edit</a></td><td>%s</td><td><a href="%s">Manage →</a></td></tr>',
             esc_html( $r['name'] ),
             $r['mascot'] ? ' <span style="color:#888">· ' . esc_html( $r['mascot'] ) . '</span>' : '',
+            esc_html( ucfirst( $r['type'] ) ),
             esc_html( $r['slug'] ),
             esc_html( $r['status'] ),
             esc_url( $edit_link ),
-            $page_link
+            $page_link,
+            esc_url( get_edit_post_link( $r['post_id'] ) )
         );
     }
     echo '</tbody></table>';
