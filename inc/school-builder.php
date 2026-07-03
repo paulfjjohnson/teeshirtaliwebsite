@@ -579,8 +579,9 @@ function tsa_sb_build_school( array $f ): array {
     update_post_meta( $store_id, '_tsa_store_tagline',    $f['tagline'] );
     update_post_meta( $store_id, '_ac_store_description', $f['description'] );
     update_post_meta( $store_id, '_tsa_school_ticker',    $f['ticker'] );
+    $base = tsa_sb_type_meta( $f['type'] )['base'];
     update_post_meta( $store_id, '_tsa_store_cta_text',   'Shop ' . $f['name'] );
-    update_post_meta( $store_id, '_tsa_store_cta_url',    '/schools/' . $slug . '/' );
+    update_post_meta( $store_id, '_tsa_store_cta_url',    '/' . $base . '/' . $slug . '/' );
     update_post_meta( $store_id, '_tsa_school_primary',   $f['primary'] );
     update_post_meta( $store_id, '_tsa_school_secondary', $f['secondary'] );
     update_post_meta( $store_id, '_tsa_school_mascot',    $f['mascot'] );
@@ -603,12 +604,12 @@ function tsa_sb_build_school( array $f ): array {
         }
     }
 
-    // ── 3. /schools/{slug}/ landing page ──
-    $parent_id = tsa_sb_ensure_schools_parent();
+    // ── 3. /{base}/{slug}/ landing page ──
+    $parent_id = tsa_sb_ensure_section_parent( $f['type'] );
     $page_id   = tsa_sb_ensure_school_page( $slug, $f['name'], $parent_id, $store_id );
     if ( $page_id ) {
-        $steps[] = sprintf( 'Landing page <a href="%s">/schools/%s/</a> ready (view <a href="%s" target="_blank">live ↗</a>).',
-            esc_url( get_edit_post_link( $page_id ) ), esc_html( $slug ), esc_url( home_url( '/schools/' . $slug . '/' ) ) );
+        $steps[] = sprintf( 'Landing page <a href="%s">/%s/%s/</a> ready (view <a href="%s" target="_blank">live ↗</a>).',
+            esc_url( get_edit_post_link( $page_id ) ), esc_html( $base ), esc_html( $slug ), esc_url( home_url( '/' . $base . '/' . $slug . '/' ) ) );
     }
 
     // ── 3b. Programs (design categories + programs hub page) ──
@@ -630,7 +631,7 @@ function tsa_sb_build_school( array $f ): array {
             '%d program%s saved (%d new design categor%s)%s.',
             count( $programs ), count( $programs ) === 1 ? '' : 's',
             $made, $made === 1 ? 'y' : 'ies',
-            $hub_id ? sprintf( ' · hub at <a href="%s" target="_blank">/schools/%s/programs/ ↗</a>', esc_url( home_url( '/schools/' . $slug . '/programs/' ) ), esc_html( $slug ) ) : ''
+            $hub_id ? sprintf( ' · hub at <a href="%s" target="_blank">/%s/%s/programs/ ↗</a>', esc_url( home_url( '/' . $base . '/' . $slug . '/programs/' ) ), esc_html( $base ), esc_html( $slug ) ) : ''
         );
     }
 
@@ -638,8 +639,8 @@ function tsa_sb_build_school( array $f ): array {
     if ( $page_id ) {
         $drops_id = tsa_sb_ensure_drops_page( $slug, $f['name'], $page_id );
         if ( $drops_id ) {
-            $steps[] = sprintf( 'Drops page <a href="%s" target="_blank">/schools/%s/drops/ ↗</a> ready — link Tee Parties to this school in the party editor.',
-                esc_url( home_url( '/schools/' . $slug . '/drops/' ) ), esc_html( $slug ) );
+            $steps[] = sprintf( 'Drops page <a href="%s" target="_blank">/%s/%s/drops/ ↗</a> ready — link Tee Parties to this store in the party editor.',
+                esc_url( home_url( '/' . $base . '/' . $slug . '/drops/' ) ), esc_html( $base ), esc_html( $slug ) );
         }
     }
 
@@ -654,7 +655,7 @@ function tsa_sb_build_school( array $f ): array {
     $steps[] = 'Cart routing + per-store delivery registered (Settings → TSA Stores).';
 
     // ── 5. Confirm directory/colors flow-through ──
-    $steps[] = sprintf( 'Appears in the <a href="%s" target="_blank">school directory</a>, color map, and request-a-store dropdown automatically.', esc_url( home_url( '/schools/' ) ) );
+    $steps[] = sprintf( 'Appears in the <a href="%s" target="_blank">%s directory</a>, color map, and request-a-store dropdown automatically.', esc_url( home_url( '/' . $base . '/' ) ), esc_html( strtolower( tsa_sb_type_meta( $f['type'] )['label'] ) ) );
 
     return [ 'verb' => $verb, 'steps' => $steps ];
 }
@@ -668,16 +669,19 @@ function tsa_sb_find_store_by_slug( string $slug ): int {
     return $q ? (int) $q[0] : 0;
 }
 
-/** Ensure the /schools/ parent page (directory) exists; return its ID. */
-function tsa_sb_ensure_schools_parent(): int {
-    $parent = get_page_by_path( 'schools' );
+/** Ensure the /<base>/ parent (directory) page for this store type exists; return its ID. */
+function tsa_sb_ensure_section_parent( string $type ): int {
+    $meta   = tsa_sb_type_meta( $type );
+    $parent = get_page_by_path( $meta['base'] );
     if ( $parent ) return (int) $parent->ID;
     $pid = wp_insert_post( [
         'post_type' => 'page', 'post_status' => 'publish',
-        'post_title' => 'Schools', 'post_name' => 'schools',
+        'post_title' => $meta['label'], 'post_name' => $meta['base'],
     ] );
     if ( $pid && ! is_wp_error( $pid ) ) {
-        update_post_meta( $pid, '_wp_page_template', 'template-school-directory.php' );
+        if ( $meta['directory_template'] ) {
+            update_post_meta( $pid, '_wp_page_template', $meta['directory_template'] );
+        }
         return (int) $pid;
     }
     return 0;
