@@ -146,8 +146,11 @@ function tsa_store_context( $store ): array {
 		$primary   = $pal['primary'] ?? '';
 		$secondary = $secondary ?: ( $pal['secondary'] ?? '' );
 	}
-	$primary   = $primary   ?: '#592c82';
-	$secondary = $secondary ?: '#c7c9c8';
+	// Neutral TSA brand fallback (gold/ink — see assets/css/tsa-tokens.css) when a
+	// store has no colors of its own. NOT Dutchtown's purple — that's one specific
+	// school's brand, not a sensible default for every unbranded store.
+	$primary   = $primary   ?: '#d8a85f';
+	$secondary = $secondary ?: '#252124';
 
 	$home_url = function_exists( 'tsa_store_url' ) && $slug ? tsa_store_url( $slug ) : home_url( '/schools/' . $slug . '/' );
 	if ( ! $home_url ) $home_url = home_url( '/schools/' . $slug . '/' );
@@ -155,12 +158,25 @@ function tsa_store_context( $store ): array {
 	// Base path for program / hub / drops children (derive from home_url path).
 	$base = trailingslashit( wp_parse_url( $home_url, PHP_URL_PATH ) ?: ( '/schools/' . $slug . '/' ) );
 
-	// Programs: prefer the store record's curated list (with live/coming-soon
-	// status); otherwise derive them from the store's actual design inventory so
-	// the storefront populates with real content without any manual setup.
+	// Programs: the store record's curated list drives name/status/ordering (live/
+	// coming-soon), but its entries carry no design count of their own — merge in
+	// real counts/images from the store's actual design inventory, matched by slug.
+	// A store with no curated list at all falls back to the fully design-derived list.
 	$programs = ( $store_id && function_exists( 'tsa_school_programs' ) ) ? tsa_school_programs( $store_id ) : [];
-	if ( ! $programs && $slug && function_exists( 'tsa_store_programs_from_designs' ) ) {
-		$programs = tsa_store_programs_from_designs( $slug );
+	if ( $slug && function_exists( 'tsa_store_programs_from_designs' ) ) {
+		$live = tsa_store_programs_from_designs( $slug );
+		if ( $programs ) {
+			$live_by_slug = [];
+			foreach ( $live as $lp ) { $live_by_slug[ $lp['slug'] ] = $lp; }
+			foreach ( $programs as &$p ) {
+				$match = $live_by_slug[ $p['slug'] ] ?? null;
+				$p['count'] = $match['count'] ?? 0;
+				if ( empty( $p['image'] ) && $match ) $p['image'] = $match['image'];
+			}
+			unset( $p );
+		} else {
+			$programs = $live;
+		}
 	}
 
 	// Primary nav stays lean: individual programs live in the Programs hub, not the

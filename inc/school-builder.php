@@ -196,6 +196,7 @@ function tsa_store_builder_page(): void {
         <form method="post" style="max-width:920px;margin-top:14px">
             <?php wp_nonce_field( 'tsa_sb_build', 'tsa_sb_nonce' ); ?>
             <input type="hidden" name="tsa_store_type" value="school">
+            <input type="hidden" name="tsa_sb_edit_id" value="<?php echo esc_attr( $editing_id ); ?>">
 
             <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:start">
 
@@ -418,6 +419,7 @@ function tsa_sb_read_form(): array {
     return [
         'name'          => $name,
         'slug'          => $slug,
+        'edit_id'       => absint( $_POST['tsa_sb_edit_id'] ?? 0 ),
         'mascot'        => sanitize_text_field( wp_unslash( $_POST['tsa_sb_mascot'] ?? '' ) ),
         'level'         => sanitize_text_field( wp_unslash( $_POST['tsa_sb_level'] ?? 'High Schools' ) ),
         'status'        => in_array( $status, [ 'live', 'coming-soon', 'hidden' ], true ) ? $status : 'coming-soon',
@@ -484,8 +486,19 @@ function tsa_sb_build_school( array $f ): array {
         return [ 'verb' => 'Error', 'steps' => [ 'A school name and slug are required.' ] ];
     }
 
-    // ── 1. Store record (configurator_store), found by slug ──
-    $store_id = tsa_sb_find_store_by_slug( $slug );
+    // ── 1. Store record (configurator_store) ──
+    // Editing an existing store: trust the known post ID from the edit link over
+    // slug matching. A store's _ac_store_slug meta can be unset (e.g. it predates
+    // this Builder, or was only ever edited on the native Stores screen), in which
+    // case slug-matching would miss it and silently create a duplicate. New stores
+    // (no edit_id) still resolve idempotently by slug, as documented.
+    $store_id = 0;
+    if ( ! empty( $f['edit_id'] ) && get_post_type( $f['edit_id'] ) === 'configurator_store' ) {
+        $store_id = (int) $f['edit_id'];
+    }
+    if ( ! $store_id ) {
+        $store_id = tsa_sb_find_store_by_slug( $slug );
+    }
     $verb     = $store_id ? 'Updated' : 'Created';
     if ( ! $store_id ) {
         $store_id = wp_insert_post( [

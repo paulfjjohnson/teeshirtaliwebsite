@@ -32,6 +32,21 @@ add_action( 'wp_enqueue_scripts', function () {
     ] );
 }, 20 );
 
+/**
+ * WooCommerce's own empty-cart "Return to shop" button (distinct from the JS
+ * mini-cart drawer's "Continue shopping" link above) still pointed at the
+ * default shop page. Reuse the same store-aware resolution so both buttons
+ * agree — the customer lands back on the store they were buying from, not a
+ * generic shop page.
+ */
+add_filter( 'woocommerce_return_to_shop_redirect', function ( $url ) {
+    if ( ! function_exists( 'tsa_cart_store_key' ) || ! function_exists( 'tsa_store_url' ) ) return $url;
+    $sk = tsa_cart_store_key();
+    if ( ! $sk ) return $url;
+    $store_url = tsa_store_url( $sk );
+    return $store_url ? (string) $store_url : $url;
+} );
+
 /* Checkout page: add a title + "Back to cart" link. Flatsome hides the page
    title on Checkout (Cart keeps it), so the page looks bare with no way back.
    Sits at the very top of the checkout form, above the coupon notice. */
