@@ -226,7 +226,7 @@ function tsa_store_builder_page(): void {
     $form   = [
         'name' => '', 'slug' => '', 'type' => 'school', 'mascot' => '', 'level' => 'High Schools',
         'status' => 'coming-soon', 'spotlight' => 0,
-        'primary' => '', 'secondary' => '', 'logo_id' => 0, 'tagline' => '', 'description' => '',
+        'primary' => '', 'secondary' => '', 'logo_id' => 0, 'preview_id' => 0, 'tagline' => '', 'description' => '',
         'ticker' => '',
         'pickups' => '', 'shipping' => 0, 'contact_email' => '',
         'programs' => [],
@@ -248,7 +248,8 @@ function tsa_store_builder_page(): void {
     }
     $levels    = tsa_school_levels();
     $brand_map = wp_json_encode( tsa_sb_brand_guide_map() );
-    $logo_src  = $form['logo_id'] ? wp_get_attachment_image_url( $form['logo_id'], 'thumbnail' ) : '';
+    $logo_src    = $form['logo_id']    ? wp_get_attachment_image_url( $form['logo_id'], 'thumbnail' ) : '';
+    $preview_src = $form['preview_id'] ? wp_get_attachment_image_url( $form['preview_id'], 'thumbnail' ) : '';
     ?>
     <div class="wrap">
         <h1><span class="dashicons dashicons-store" style="font-size:28px;width:28px;height:28px;vertical-align:-4px"></span> TSA Store Builder</h1>
@@ -344,6 +345,14 @@ function tsa_store_builder_page(): void {
                                 <img id="tsa_sb_logo_preview" src="<?php echo esc_url( $logo_src ); ?>" style="max-height:54px;display:<?php echo $logo_src ? 'inline-block' : 'none'; ?>;vertical-align:middle;margin-right:10px;border:1px solid #ddd;border-radius:6px">
                                 <button type="button" class="button" id="tsa_sb_logo_btn">Select logo</button>
                                 <button type="button" class="button-link" id="tsa_sb_logo_clear" style="<?php echo $logo_src ? '' : 'display:none'; ?>;margin-left:8px;color:#b32d2e">Remove</button>
+                            </td></tr>
+                        <tr><th>Homepage preview image</th>
+                            <td>
+                                <input type="hidden" name="tsa_sb_preview_id" id="tsa_sb_preview_id" value="<?php echo esc_attr( $form['preview_id'] ); ?>">
+                                <img id="tsa_sb_preview_preview" src="<?php echo esc_url( $preview_src ); ?>" style="max-height:54px;display:<?php echo $preview_src ? 'inline-block' : 'none'; ?>;vertical-align:middle;margin-right:10px;border:1px solid #ddd;border-radius:6px">
+                                <button type="button" class="button" id="tsa_sb_preview_btn">Select preview image</button>
+                                <button type="button" class="button-link" id="tsa_sb_preview_clear" style="<?php echo $preview_src ? '' : 'display:none'; ?>;margin-left:8px;color:#b32d2e">Remove</button>
+                                <p class="description">Shown on the homepage's "Now Live" spotlight card for this store. Falls back to Logo if not set.</p>
                             </td></tr>
                     </tbody></table>
 
@@ -493,6 +502,25 @@ function tsa_store_builder_page(): void {
         });
         if (clr) clr.addEventListener('click', function(e){ e.preventDefault(); idf.value=''; img.style.display='none'; clr.style.display='none'; });
 
+        // Media homepage-preview-image picker
+        var pbtn = document.getElementById('tsa_sb_preview_btn'),
+            pclr = document.getElementById('tsa_sb_preview_clear'),
+            pidf = document.getElementById('tsa_sb_preview_id'),
+            pimg = document.getElementById('tsa_sb_preview_preview'), pframe;
+        if (pbtn) pbtn.addEventListener('click', function(e){
+            e.preventDefault();
+            if (pframe) { pframe.open(); return; }
+            pframe = wp.media({ title:'Select homepage preview image', button:{ text:'Use image' }, multiple:false });
+            pframe.on('select', function(){
+                var a = pframe.state().get('selection').first().toJSON();
+                pidf.value = a.id;
+                pimg.src = (a.sizes && a.sizes.thumbnail ? a.sizes.thumbnail.url : a.url);
+                pimg.style.display = 'inline-block'; pclr.style.display = '';
+            });
+            pframe.open();
+        });
+        if (pclr) pclr.addEventListener('click', function(e){ e.preventDefault(); pidf.value=''; pimg.style.display='none'; pclr.style.display='none'; });
+
         // Programs — add / remove repeatable rows
         var progBody = document.querySelector('#tsa-sb-programs tbody');
         var addProg  = document.getElementById('tsa-sb-add-prog');
@@ -542,6 +570,7 @@ function tsa_sb_read_form(): array {
         'primary'       => $hex( $_POST['tsa_sb_primary'] ?? '', '#592C82' ),
         'secondary'     => $hex( $_POST['tsa_sb_secondary'] ?? '', '#C7C9C8' ),
         'logo_id'       => absint( $_POST['tsa_sb_logo_id'] ?? 0 ),
+        'preview_id'    => absint( $_POST['tsa_sb_preview_id'] ?? 0 ),
         'tagline'       => sanitize_text_field( wp_unslash( $_POST['tsa_sb_tagline'] ?? '' ) ),
         'description'   => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_description'] ?? '' ) ),
         'ticker'        => sanitize_textarea_field( wp_unslash( $_POST['tsa_sb_ticker'] ?? '' ) ),
@@ -565,6 +594,7 @@ function tsa_sb_form_from_store( int $store_id ): array {
         'primary'       => get_post_meta( $store_id, '_tsa_school_primary', true ) ?: '#592C82',
         'secondary'     => get_post_meta( $store_id, '_tsa_school_secondary', true ) ?: '#C7C9C8',
         'logo_id'       => (int) get_post_thumbnail_id( $store_id ),
+        'preview_id'    => (int) get_post_meta( $store_id, '_tsa_store_preview_id', true ),
         'tagline'       => get_post_meta( $store_id, '_tsa_store_tagline', true ),
         'description'   => get_post_meta( $store_id, '_ac_store_description', true ),
         'ticker'        => get_post_meta( $store_id, '_tsa_school_ticker', true ),
@@ -650,6 +680,7 @@ function tsa_sb_build_school( array $f ): array {
     update_post_meta( $store_id, '_tsa_school_shipping',  $f['shipping'] ? '1' : '0' );
     update_post_meta( $store_id, '_tsa_school_contact_email', $f['contact_email'] );
     if ( $f['logo_id'] ) set_post_thumbnail( $store_id, $f['logo_id'] );
+    update_post_meta( $store_id, '_tsa_store_preview_id', $f['preview_id'] );
 
     $steps[] = sprintf( 'Store record <a href="%s">%s</a> (slug <code>%s</code>, %s).',
         esc_url( get_edit_post_link( $store_id ) ), esc_html( $f['name'] ), esc_html( $slug ), esc_html( $f['status'] ) );

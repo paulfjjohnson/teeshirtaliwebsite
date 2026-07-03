@@ -10,15 +10,11 @@ defined( 'ABSPATH' ) || exit;
 
 get_header();
 
-// Spotlight store
-$spotlight_store    = tsa_get_spotlight_store();
-$spotlight_cta_url  = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_cta_url', true ) : '/schools/dutchtown/';
-$spotlight_title    = $spotlight_store ? get_the_title( $spotlight_store->ID ) : 'Dutchtown High School Spirit Store';
-$spotlight_tagline  = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_tagline', true ) : 'Shop Color Guard, parent gear, fan apparel, and exclusive collections.';
-$spotlight_cta_text = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_cta_text', true ) : 'Enter Store';
-$spotlight_img_id   = $spotlight_store ? get_post_thumbnail_id( $spotlight_store->ID ) : 0;
-$spotlight_img_src  = $spotlight_img_id ? wp_get_attachment_image_url( $spotlight_img_id, 'tsa-store-banner' ) : '';
-$spotlight_img_css  = $spotlight_img_src ? 'style="background-image:url(' . esc_url( $spotlight_img_src ) . ')"' : '';
+// Spotlight store (still used for the Hero's "Shop School Gear" link only —
+// the Section 2 "Active Store Spotlight" card below now loops every live
+// store instead of just the one flagged _tsa_is_spotlight).
+$spotlight_store   = tsa_get_spotlight_store();
+$spotlight_cta_url = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_cta_url', true ) : '/schools/dutchtown/';
 ?>
 
 <!-- ══════════════════════════════════════
@@ -58,21 +54,59 @@ $spotlight_img_css  = $spotlight_img_src ? 'style="background-image:url(' . esc_
 
 
 <!-- ══════════════════════════════════════
-     SECTION 2 — ACTIVE STORE SPOTLIGHT
+     SECTION 2 — LIVE SCHOOL STORES
+     One big spotlight-style card per live store (was: a single card for
+     whichever store had the _tsa_is_spotlight flag, plus a separate small-
+     card grid further down the page — the grid is gone, this now covers
+     every live store the grid used to list).
 ══════════════════════════════════════ -->
-<?php if ( $spotlight_store ) : ?>
+<?php
+$live_stores = array_filter( tsa_get_homepage_stores(), function ( $s ) {
+    return get_post_meta( $s->ID, '_tsa_homepage_status', true ) === 'live';
+} );
+foreach ( $live_stores as $store ) :
+    $store_slug     = get_post_meta( $store->ID, '_ac_store_slug', true );
+    $store_cta_url  = get_post_meta( $store->ID, '_tsa_store_cta_url', true );
+    if ( ! $store_cta_url ) {
+        $store_cta_url = function_exists( 'tsa_store_url' ) && $store_slug ? tsa_store_url( $store_slug ) : home_url( '/schools/' . $store_slug . '/' );
+    }
+    $store_tagline  = get_post_meta( $store->ID, '_tsa_store_tagline', true );
+    $store_cta_text = get_post_meta( $store->ID, '_tsa_store_cta_text', true ) ?: 'Enter Store';
+    // Homepage preview image (dedicated field, Store Builder) → Logo (featured
+    // image) → nothing. Fall back to the original full-size upload when the
+    // tsa-store-banner crop hasn't been generated for that attachment (e.g. it
+    // was uploaded before that image size was registered — WP doesn't backfill
+    // sizes retroactively).
+    $store_img_id   = (int) get_post_meta( $store->ID, '_tsa_store_preview_id', true ) ?: get_post_thumbnail_id( $store->ID );
+    $store_img_src  = $store_img_id
+        ? ( wp_get_attachment_image_url( $store_img_id, 'tsa-store-banner' ) ?: wp_get_attachment_image_url( $store_img_id, 'full' ) )
+        : '';
+    $store_img_css  = $store_img_src ? 'background-image:url(' . esc_url( $store_img_src ) . ');' : '';
+
+    // Card color: store's own saved color → school palette → neutral TSA
+    // default — same resolution chain used on the store's own landing-page
+    // hero (inc/store-chrome.php), so this card matches instead of showing
+    // one hardcoded color for every school.
+    $store_primary = get_post_meta( $store->ID, '_tsa_school_primary', true );
+    if ( ! $store_primary && function_exists( 'tsa_get_school_colors' ) ) {
+        $store_pal     = tsa_get_school_colors( get_the_title( $store->ID ) );
+        $store_primary = $store_pal['primary'] ?? '';
+    }
+    $store_primary   = $store_primary ?: '#d8a85f';
+    $store_card_text = function_exists( 'tsa_readable_text' ) ? tsa_readable_text( $store_primary ) : '#ffffff';
+?>
 <section class="tsa-section tsa-active-store">
-    <div class="tsa-store-card">
-        <div class="tsa-store-visual" <?php echo $spotlight_img_css; // phpcs:ignore ?>></div>
+    <div class="tsa-store-card" style="background:<?php echo esc_attr( $store_primary ); ?>;color:<?php echo esc_attr( $store_card_text ); ?>;">
+        <div class="tsa-store-visual" style="<?php echo esc_attr( $store_img_css ); ?>"></div>
         <div class="tsa-store-copy">
             <div class="tsa-kicker tsa-kicker--light">Now Live</div>
-            <h2><?php echo esc_html( $spotlight_title ); ?></h2>
-            <p><?php echo esc_html( $spotlight_tagline ); ?></p>
-            <?php tsa_btn( $spotlight_cta_url, $spotlight_cta_text, 'primary' ); ?>
+            <h2><?php echo esc_html( get_the_title( $store->ID ) ); ?></h2>
+            <p><?php echo esc_html( $store_tagline ); ?></p>
+            <?php tsa_btn( $store_cta_url, $store_cta_text, 'primary' ); ?>
         </div>
     </div>
 </section>
-<?php endif; ?>
+<?php endforeach; ?>
 
 
 <!-- ══════════════════════════════════════
@@ -204,61 +238,6 @@ if ( trim( $tsa_featured_html ) !== '' ) :
             <h3>Hats &amp; Headwear</h3>
             <p>Richardson, YP Classics — snapbacks, truckers, beanies, and visors ready for your logo.</p>
         </a>
-    </div>
-</section>
-
-
-<!-- ══════════════════════════════════════
-     SECTION 7 — SCHOOL STORES GRID
-══════════════════════════════════════ -->
-<section class="tsa-section tsa-schools">
-    <div class="tsa-section-head">
-        <h2>School Stores</h2>
-        <p>Each school gets its own branded storefront under Tee Shirt Ali — spirit wear, team gear, and exclusive drops all in one place.</p>
-    </div>
-
-    <?php
-    $stores = tsa_get_homepage_stores();
-    if ( $stores ) :
-    ?>
-    <div class="tsa-school-grid">
-        <?php foreach ( $stores as $store ) :
-            $status  = get_post_meta( $store->ID, '_tsa_homepage_status', true );
-            $cta_url = get_post_meta( $store->ID, '_tsa_store_cta_url', true );
-            $is_live = ( $status === 'live' );
-            $tag     = $is_live && $cta_url ? 'a' : 'div';
-            $href    = $is_live && $cta_url ? ' href="' . esc_url( $cta_url ) . '"' : '';
-        ?>
-            <<?php echo esc_html( $tag ); ?><?php echo $href; // phpcs:ignore
-                ?> class="tsa-school-card<?php echo $is_live ? ' live' : ''; ?>">
-                <h3><?php echo esc_html( get_the_title( $store->ID ) ); ?></h3>
-                <p><?php echo $is_live ? 'Now live' : 'Coming soon'; ?></p>
-            </<?php echo esc_html( $tag ); ?>>
-        <?php endforeach; ?>
-    </div>
-    <?php else : ?>
-    <div class="tsa-school-grid">
-        <a href="/schools/dutchtown/" class="tsa-school-card live">
-            <h3>Dutchtown</h3>
-            <p>Now live</p>
-        </a>
-        <div class="tsa-school-card">
-            <h3>Prairieville</h3>
-            <p>Coming soon</p>
-        </div>
-        <div class="tsa-school-card">
-            <h3>St. Amant</h3>
-            <p>Coming soon</p>
-        </div>
-        <div class="tsa-school-card">
-            <h3>East Ascension</h3>
-            <p>Coming soon</p>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <div style="text-align:center; margin-top: 32px;">
-        <?php tsa_btn( '/schools/', 'View All Schools', 'dark' ); ?>
     </div>
 </section>
 

@@ -217,7 +217,6 @@ body.dths-active,
     radial-gradient(circle at 92% 10%, rgba(199,201,200,.07), transparent 20%),
     linear-gradient(180deg, #09090b 0%, #111114 52%, #09090b 100%);
   padding: 120px 0 140px;
-  min-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
