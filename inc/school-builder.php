@@ -108,6 +108,41 @@ function tsa_school_store_records(): array {
 }
 
 /**
+ * Every store record (any type), normalized for the Builder's admin table.
+ * Unlike tsa_school_store_records() this is NOT filtered to type=school and
+ * is NOT used by any front-end directory — admin listing only.
+ */
+function tsa_all_store_records(): array {
+    $records = [];
+    $posts   = get_posts( [
+        'post_type'   => 'configurator_store',
+        'post_status' => 'publish',
+        'numberposts' => -1,
+        'orderby'     => 'title',
+        'order'       => 'ASC',
+    ] );
+
+    foreach ( $posts as $p ) {
+        $slug = sanitize_title( get_post_meta( $p->ID, '_ac_store_slug', true ) ?: $p->post_name );
+        if ( ! $slug ) continue;
+        $type   = get_post_meta( $p->ID, '_tsa_store_type', true ) ?: 'school';
+        $status = get_post_meta( $p->ID, '_tsa_homepage_status', true ) ?: 'coming-soon';
+        $base   = tsa_sb_type_meta( $type )['base'];
+
+        $records[] = [
+            'post_id' => $p->ID,
+            'name'    => $p->post_title,
+            'slug'    => $slug,
+            'type'    => $type,
+            'status'  => in_array( $status, [ 'live', 'coming-soon', 'hidden' ], true ) ? $status : 'coming-soon',
+            'mascot'  => get_post_meta( $p->ID, '_tsa_school_mascot', true ),
+            'url'     => '/' . $base . '/' . $slug . '/',
+        ];
+    }
+    return $records;
+}
+
+/**
  * Every school store for the Design Library directory grid — INCLUDING hidden
  * (shown as "Not active") — with the RAW 3-way status + logo URL for the card UI.
  * tsa_school_store_records() drops hidden schools and collapses status to
@@ -861,20 +896,21 @@ function tsa_shortcode_school_drops( $atts ): string {
     return ob_get_clean();
 }
 
-/** Small list of already-built school stores under the form. */
+/** Full store listing (every type) under the form. */
 function tsa_sb_render_existing(): void {
-    $records = tsa_school_store_records();
-    echo '<hr style="margin:28px 0"><h2>Existing school stores</h2>';
-    if ( ! $records ) { echo '<p><em>None generated yet. The directory still shows the seeded list until you build schools here.</em></p>'; return; }
-    echo '<table class="widefat striped" style="max-width:920px"><thead><tr><th>School</th><th>Slug</th><th>Status</th><th>Store</th><th>Page</th></tr></thead><tbody>';
+    $records = tsa_all_store_records();
+    echo '<hr style="margin:28px 0"><h2>All stores</h2>';
+    if ( ! $records ) { echo '<p><em>None generated yet. The directory still shows the seeded list until you build stores here.</em></p>'; return; }
+    echo '<table class="widefat striped" style="max-width:920px"><thead><tr><th>Store</th><th>Type</th><th>Slug</th><th>Status</th><th>Store</th><th>Page</th></tr></thead><tbody>';
     foreach ( $records as $r ) {
         $page = get_posts( [ 'post_type' => 'page', 'name' => $r['slug'], 'numberposts' => 1, 'post_status' => 'any' ] );
         $page_link = $page ? '<a href="' . esc_url( home_url( $r['url'] ) ) . '" target="_blank">view ↗</a>' : '—';
         $edit_link = admin_url( 'admin.php?page=tsa-store-builder&tsa_sb_edit=' . $r['post_id'] );
         printf(
-            '<tr><td><strong>%s</strong>%s</td><td><code>%s</code></td><td>%s</td><td><a href="%s">edit</a></td><td>%s</td></tr>',
+            '<tr><td><strong>%s</strong>%s</td><td>%s</td><td><code>%s</code></td><td>%s</td><td><a href="%s">edit</a></td><td>%s</td></tr>',
             esc_html( $r['name'] ),
             $r['mascot'] ? ' <span style="color:#888">· ' . esc_html( $r['mascot'] ) . '</span>' : '',
+            esc_html( ucfirst( $r['type'] ) ),
             esc_html( $r['slug'] ),
             esc_html( $r['status'] ),
             esc_url( $edit_link ),
