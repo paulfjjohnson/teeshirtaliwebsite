@@ -83,10 +83,15 @@ function tsa_school_store_records(): array {
         'numberposts' => -1,
         'orderby'     => 'title',
         'order'       => 'ASC',
-        'meta_query'  => [ [ 'key' => '_tsa_store_type', 'value' => 'school' ] ],
     ] );
 
     foreach ( $posts as $p ) {
+        // Missing _tsa_store_type means the store predates the Store type field
+        // (e.g. Gonzales Primary, built before that field existed) — treat it as
+        // 'school' by default, same fallback used everywhere else this meta is read.
+        $type = get_post_meta( $p->ID, '_tsa_store_type', true ) ?: 'school';
+        if ( $type !== 'school' ) continue;
+
         $status_raw = get_post_meta( $p->ID, '_tsa_homepage_status', true ) ?: 'coming-soon';
         if ( $status_raw === 'hidden' ) continue; // exists, but not shown in directory
         $slug = sanitize_title( get_post_meta( $p->ID, '_ac_store_slug', true ) ?: $p->post_name );

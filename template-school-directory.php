@@ -16,8 +16,12 @@ get_header();
  * ──────────────────────────────────────────────────────────────────────────── */
 $school_groups = function_exists( 'tsa_school_directory' ) ? tsa_school_directory() : [];
 
-$live_count  = 1;
-$total_count = 32;
+$live_count  = 0;
+$total_count = 0;
+foreach ( $school_groups as $schools ) {
+    $total_count += count( $schools );
+    $live_count  += count( array_filter( $schools, function ( $s ) { return $s['status'] === 'live'; } ) );
+}
 ?>
 
 <!-- ══════════════════════════════════════
