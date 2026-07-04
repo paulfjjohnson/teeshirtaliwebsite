@@ -232,7 +232,7 @@ if ( trim( $tsa_featured_html ) !== '' ) :
                 <div style="padding:18px 20px;">
                     <h3 style="margin:0 0 4px;font-size:19px;"><?php echo esc_html( get_the_title( $store->ID ) ); ?></h3>
                     <?php if ( $card_tagline ) : ?><p style="margin:0 0 10px;font-size:13px;opacity:.85;"><?php echo esc_html( $card_tagline ); ?></p><?php endif; ?>
-                    <p style="margin:0;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></span>Now live</p>
+                    <p style="margin:0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;">Now live</p>
                 </div>
             </a>
             <?php else : ?>
