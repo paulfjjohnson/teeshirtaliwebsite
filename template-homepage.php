@@ -10,15 +10,9 @@ defined( 'ABSPATH' ) || exit;
 
 get_header();
 
-// Spotlight store
-$spotlight_store    = tsa_get_spotlight_store();
-$spotlight_cta_url  = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_cta_url', true ) : '/schools/dutchtown/';
-$spotlight_title    = $spotlight_store ? get_the_title( $spotlight_store->ID ) : 'Dutchtown High School Spirit Store';
-$spotlight_tagline  = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_tagline', true ) : 'Shop Color Guard, parent gear, fan apparel, and exclusive collections.';
-$spotlight_cta_text = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_cta_text', true ) : 'Enter Store';
-$spotlight_img_id   = $spotlight_store ? get_post_thumbnail_id( $spotlight_store->ID ) : 0;
-$spotlight_img_src  = $spotlight_img_id ? wp_get_attachment_image_url( $spotlight_img_id, 'tsa-store-banner' ) : '';
-$spotlight_img_css  = $spotlight_img_src ? 'style="background-image:url(' . esc_url( $spotlight_img_src ) . ')"' : '';
+// Spotlight store — still used for the Hero's "Shop School Gear" link only.
+$spotlight_store   = tsa_get_spotlight_store();
+$spotlight_cta_url = $spotlight_store ? get_post_meta( $spotlight_store->ID, '_tsa_store_cta_url', true ) : '/schools/dutchtown/';
 ?>
 
 <!-- ══════════════════════════════════════
@@ -55,24 +49,6 @@ $spotlight_img_css  = $spotlight_img_src ? 'style="background-image:url(' . esc_
         </div>
     </div>
 </section>
-
-
-<!-- ══════════════════════════════════════
-     SECTION 2 — ACTIVE STORE SPOTLIGHT
-══════════════════════════════════════ -->
-<?php if ( $spotlight_store ) : ?>
-<section class="tsa-section tsa-active-store">
-    <div class="tsa-store-card">
-        <div class="tsa-store-visual" <?php echo $spotlight_img_css; // phpcs:ignore ?>></div>
-        <div class="tsa-store-copy">
-            <div class="tsa-kicker tsa-kicker--light">Now Live</div>
-            <h2><?php echo esc_html( $spotlight_title ); ?></h2>
-            <p><?php echo esc_html( $spotlight_tagline ); ?></p>
-            <?php tsa_btn( $spotlight_cta_url, $spotlight_cta_text, 'primary' ); ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
 
 
 <!-- ══════════════════════════════════════
@@ -226,7 +202,7 @@ if ( trim( $tsa_featured_html ) !== '' ) :
             $status  = get_post_meta( $store->ID, '_tsa_homepage_status', true );
             $is_live = ( $status === 'live' );
 
-            if ( $is_live ) {
+            if ( $is_live ) :
                 $card_cta_url = get_post_meta( $store->ID, '_tsa_store_cta_url', true );
                 if ( ! $card_cta_url ) {
                     $card_slug    = get_post_meta( $store->ID, '_ac_store_slug', true );
@@ -251,7 +227,7 @@ if ( trim( $tsa_featured_html ) !== '' ) :
             ?>
             <a href="<?php echo esc_url( $card_cta_url ); ?>" class="tsa-school-card live" style="background:<?php echo esc_attr( $card_primary ); ?>;color:<?php echo esc_attr( $card_text ); ?>;padding:0;overflow:hidden;display:flex;flex-direction:column;">
                 <?php if ( $card_img_src ) : ?>
-                <div style="height:110px;background-image:url(<?php echo esc_url( $card_img_src ); ?>);background-size:cover;background-position:center;"></div>
+                <div style="height:130px;background-color:rgba(255,255,255,.15);background-image:url(<?php echo esc_url( $card_img_src ); ?>);background-size:contain;background-repeat:no-repeat;background-position:center;"></div>
                 <?php endif; ?>
                 <div style="padding:18px 20px;">
                     <h3 style="margin:0 0 4px;font-size:19px;"><?php echo esc_html( get_the_title( $store->ID ) ); ?></h3>
