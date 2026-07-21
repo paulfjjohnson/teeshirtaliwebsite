@@ -61,9 +61,21 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['tsa_quote_nonce'] )
         // attached something we can't accept, block the submit and tell them, so a
         // quote never goes through thinking it sent art when it didn't.
         $art_max = (int) apply_filters( 'tsa_quote_upload_max_bytes', 50 * 1024 * 1024 ); // 50 MB
-        if ( isset( $_FILES['q_artfile'] ) && ! empty( $_FILES['q_artfile']['name'] ) ) {
-            $ferr = (int) $_FILES['q_artfile']['error'];
-            if ( in_array( $ferr, [ UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ], true ) || (int) $_FILES['q_artfile']['size'] > $art_max ) {
+        // The form exposes two optional file inputs — "q_artfile" (apparel/DTF
+        // artwork) and "q_reffile" (design reference). Only one category's field
+        // is visible at a time, but the browser still submits the hidden, empty
+        // sibling. Pick whichever input actually carries a file so an empty one
+        // can't shadow a real upload (which would drop the file silently).
+        $art_file = null;
+        foreach ( [ 'q_artfile', 'q_reffile' ] as $art_field ) {
+            if ( isset( $_FILES[ $art_field ] ) && ! empty( $_FILES[ $art_field ]['name'] ) ) {
+                $art_file = $_FILES[ $art_field ];
+                break;
+            }
+        }
+        if ( $art_file ) {
+            $ferr = (int) $art_file['error'];
+            if ( in_array( $ferr, [ UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ], true ) || (int) $art_file['size'] > $art_max ) {
                 $submit_error = 'Your file is too large (limit ' . size_format( $art_max ) . '). Please send a smaller file, or email your artwork to us separately.';
             } elseif ( $ferr !== UPLOAD_ERR_OK ) {
                 $submit_error = 'Your file couldn\'t be uploaded — please try again, or email your artwork to us separately.';
@@ -95,7 +107,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['tsa_quote_nonce'] )
                     return $dirs;
                 };
                 add_filter( 'upload_dir', $q_updir );
-                $uploaded = wp_handle_upload( $_FILES['q_artfile'], $art_overrides );
+                $uploaded = wp_handle_upload( $art_file, $art_overrides );
                 remove_filter( 'upload_dir', $q_updir );
                 if ( $uploaded && empty( $uploaded['error'] ) ) {
                     $art_url  = $uploaded['url'];
@@ -521,7 +533,7 @@ get_header();
                             <div class="tsa-rs-fieldset-title">Reference / Inspiration <span style="font-weight:400;opacity:.6;font-size:12px">— optional</span></div>
                             <div class="tsa-rs-field">
                                 <div class="tsa-rs-upload-zone" id="tsa-qr-ref-zone">
-                                    <input type="file" id="q_artfile" name="q_artfile"
+                                    <input type="file" id="q_reffile" name="q_reffile"
                                            class="tsa-rs-file-input"
                                            accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif,.svg,.pdf">
                                     <div class="tsa-rs-upload-inner" id="tsa-qr-ref-inner">
@@ -890,7 +902,7 @@ get_header();
     }
 
     initUploadZone('tsa-qr-upload-zone','q_artfile','tsa-qr-upload-inner','tsa-qr-upload-preview','tsa-qr-preview-img','tsa-qr-preview-name','tsa-qr-preview-size','tsa-qr-upload-remove');
-    initUploadZone('tsa-qr-ref-zone','q_artfile','tsa-qr-ref-inner','tsa-qr-ref-preview','tsa-qr-ref-img','tsa-qr-ref-name','tsa-qr-ref-size','tsa-qr-ref-remove');
+    initUploadZone('tsa-qr-ref-zone','q_reffile','tsa-qr-ref-inner','tsa-qr-ref-preview','tsa-qr-ref-img','tsa-qr-ref-name','tsa-qr-ref-size','tsa-qr-ref-remove');
 
 
     // ── FAQ accordion ─────────────────────────────────────────
