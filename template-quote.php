@@ -384,11 +384,13 @@ get_header();
                                 <div class="tsa-rs-field tsa-rs-field--half">
                                     <label class="tsa-rs-label" for="q_pstyle">Print Style</label>
                                     <select class="tsa-rs-select" id="q_pstyle" name="q_pstyle">
+                                        <option selected>Full Color (DTF)</option>
+                                        <!-- Other print styles temporarily disabled — DTF only for now.
                                         <option value="">Select…</option>
-                                        <option>Full Color (DTF)</option>
                                         <option>1–3 Spot Colors</option>
                                         <option>Embroidery</option>
                                         <option>Not sure — recommend one</option>
+                                        -->
                                     </select>
                                 </div>
                             </div>
