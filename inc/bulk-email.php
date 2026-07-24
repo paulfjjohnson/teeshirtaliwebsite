@@ -96,6 +96,7 @@ function tsa_bulk_customer_index( $fresh = false ) {
 			'name'         => trim( $o->get_billing_first_name() . ' ' . $o->get_billing_last_name() ),
 			'order_number' => $o->get_order_number(),
 			'order_status' => function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $o->get_status() ) : $o->get_status(),
+			'order_status_slug' => $o->get_status(),
 			'order_total'  => html_entity_decode( wp_strip_all_tags( $o->get_formatted_order_total() ) ),
 			'order_date'   => $o->get_date_created() ? $o->get_date_created()->date( 'M j, Y' ) : '',
 			'order_items'  => implode( ', ', $items ),
@@ -143,8 +144,20 @@ function tsa_bulk_sources() {
 	return $out;
 }
 
-/** Resolve a source value → recipient rows [ email, name, data ]. */
-function tsa_bulk_recipients_for( $source, $manual = '', $fresh = false ) {
+/** Order statuses offered as the checklist filter (matches what the index scans). */
+function tsa_bulk_status_options() {
+	$out = [];
+	foreach ( [ 'processing', 'completed', 'on-hold' ] as $s ) {
+		$out[ $s ] = function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $s ) : ucfirst( $s );
+	}
+	return $out;
+}
+
+/**
+ * Resolve a source value → recipient rows [ email, name, data ].
+ * $status (slug, or 'any') limits to customers whose latest order is that status.
+ */
+function tsa_bulk_recipients_for( $source, $manual = '', $fresh = false, $status = 'any' ) {
 	$rows = [];
 
 	if ( 'manual' === $source ) {
@@ -165,6 +178,7 @@ function tsa_bulk_recipients_for( $source, $manual = '', $fresh = false ) {
 		$bucket = [];
 	}
 	foreach ( $bucket as $email => $data ) {
+		if ( $status && 'any' !== $status && ( $data['order_status_slug'] ?? '' ) !== $status ) { continue; }
 		$rows[] = [ 'email' => $email, 'name' => (string) ( $data['name'] ?? '' ), 'data' => $data ];
 	}
 	return tsa_bulk_dedupe_suppress( $rows );
@@ -333,6 +347,25 @@ function tsa_bulk_decode_recipients( array $tokens ) {
 	return tsa_bulk_dedupe_suppress( $out );
 }
 
+/* ─── CSV export of the checked recipients ─────────────────────────── */
+add_action( 'admin_post_tsa_bulk_export', 'tsa_bulk_export_csv' );
+function tsa_bulk_export_csv() {
+	if ( ! current_user_can( 'manage_options' ) ) { wp_die( 'Not allowed.' ); }
+	check_admin_referer( 'tsa_bulk_send', 'tsa_bulk_nonce' );
+	$rows = tsa_bulk_decode_recipients( (array) ( $_POST['recipient'] ?? [] ) );
+	nocache_headers();
+	header( 'Content-Type: text/csv; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename=bulk-email-recipients-' . gmdate( 'Ymd-His' ) . '.csv' );
+	$out = fopen( 'php://output', 'w' );
+	fputcsv( $out, [ 'Email', 'Name', 'Order #', 'Status', 'Total', 'Date', 'Items' ] );
+	foreach ( $rows as $r ) {
+		$d = (array) $r['data'];
+		fputcsv( $out, [ $r['email'], $r['name'], $d['order_number'] ?? '', $d['order_status'] ?? '', $d['order_total'] ?? '', $d['order_date'] ?? '', $d['order_items'] ?? '' ] );
+	}
+	fclose( $out );
+	exit;
+}
+
 /* ─── Admin screen (handles its own POST) ──────────────────────────── */
 function tsa_bulk_email_page() {
 	if ( ! current_user_can( 'manage_options' ) ) { return; }
@@ -344,6 +377,7 @@ function tsa_bulk_email_page() {
 	$manual = '';
 	$subject = '';
 	$body    = '';
+	$order_status = 'any';
 
 	if ( ! empty( $_POST['tsa_do'] ) ) {
 		check_admin_referer( 'tsa_bulk_send', 'tsa_bulk_nonce' );
@@ -352,9 +386,10 @@ function tsa_bulk_email_page() {
 		$manual  = sanitize_textarea_field( wp_unslash( $_POST['manual_list'] ?? '' ) );
 		$subject = sanitize_text_field( wp_unslash( $_POST['subject'] ?? '' ) );
 		$body    = wp_kses_post( wp_unslash( $_POST['body'] ?? '' ) );
+		$order_status = sanitize_text_field( wp_unslash( $_POST['order_status'] ?? 'any' ) );
 
 		if ( 'load' === $do ) {
-			$loaded = tsa_bulk_recipients_for( $source, $manual, ! empty( $_POST['refresh'] ) );
+			$loaded = tsa_bulk_recipients_for( $source, $manual, ! empty( $_POST['refresh'] ), $order_status );
 			$notice = $loaded ? [ 'info', count( $loaded ) . ' customer(s) found — tick who to email, then compose below.' ]
 			                  : [ 'error', 'No customers found for that source. Try another, or refresh the customer list.' ];
 		} else {
@@ -421,6 +456,18 @@ function tsa_bulk_email_page() {
 					<th scope="row"><label for="tsa-bulk-manual">Pasted list</label></th>
 					<td><textarea id="tsa-bulk-manual" name="manual_list" rows="3" class="large-text" placeholder="emails separated by commas, spaces, or new lines"><?php echo esc_textarea( $manual ); ?></textarea></td>
 				</tr>
+				<tr id="tsa-bulk-status-row" style="<?php echo 'manual' === $source ? 'display:none' : ''; ?>">
+					<th scope="row"><label for="tsa-bulk-status">Order status</label></th>
+					<td>
+						<select id="tsa-bulk-status" name="order_status">
+							<option value="any" <?php selected( $order_status, 'any' ); ?>>Any status</option>
+							<?php foreach ( tsa_bulk_status_options() as $sv => $sl ) : ?>
+								<option value="<?php echo esc_attr( $sv ); ?>" <?php selected( $order_status, $sv ); ?>><?php echo esc_html( $sl ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">Limit the list to customers whose most recent order has this status (e.g. everyone still in <em>Processing</em>). Ignored for a pasted list.</p>
+					</td>
+				</tr>
 			</tbody></table>
 			<p><button type="submit" name="tsa_do" value="load" class="button">Load recipients</button></p>
 
@@ -463,6 +510,7 @@ function tsa_bulk_email_page() {
 				<p class="submit">
 					<button type="submit" name="tsa_do" value="preview" class="button">Preview selected</button>
 					<button type="submit" name="tsa_do" value="test" class="button">Send test to me</button>
+					<button type="submit" name="action" value="tsa_bulk_export" class="button" formaction="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">Export CSV</button>
 					<button type="submit" name="tsa_do" value="send" class="button button-primary" onclick="return confirm('Send this email to the checked recipients?');">Send campaign</button>
 				</p>
 			<?php endif; ?>
@@ -497,8 +545,13 @@ function tsa_bulk_email_page() {
 	<script>
 	(function(){
 		var src = document.getElementById('tsa-bulk-source'),
-		    row = document.getElementById('tsa-bulk-manual-row');
-		if (src && row) { src.addEventListener('change', function(){ row.style.display = src.value === 'manual' ? '' : 'none'; }); }
+		    row = document.getElementById('tsa-bulk-manual-row'),
+		    strow = document.getElementById('tsa-bulk-status-row');
+		if (src) { src.addEventListener('change', function(){
+			var manual = src.value === 'manual';
+			if (row)   { row.style.display   = manual ? '' : 'none'; }
+			if (strow) { strow.style.display = manual ? 'none' : ''; }
+		}); }
 		var all = document.getElementById('tsa-bulk-all');
 		if (all) { all.addEventListener('change', function(){
 			document.querySelectorAll('.tsa-bulk-cb').forEach(function(cb){ cb.checked = all.checked; });
