@@ -46,6 +46,17 @@ add_action( 'admin_menu', function () {
 	);
 } );
 
+/* ─── Command Center card ──────────────────────────────────────────── */
+add_filter( 'tsa_admin_hub_tools', function ( $groups ) {
+	$card = [ 'Bulk Email', 'Email customers, stores & subscribers', '📣', admin_url( 'admin.php?page=tsa-bulk-email' ) ];
+	if ( isset( $groups['Drops & Marketing'] ) && is_array( $groups['Drops & Marketing'] ) ) {
+		$groups['Drops & Marketing'][] = $card;
+	} else {
+		$groups['Drops & Marketing'] = [ $card ];
+	}
+	return $groups;
+} );
+
 /* ─── Segment / provider registry ──────────────────────────────────── */
 /**
  * Each provider returns rows: [ 'email' => , 'name' => , 'data' => [merge…] ].
