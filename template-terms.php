@@ -9,13 +9,18 @@
 defined( 'ABSPATH' ) || exit;
 
 get_header();
+
+// Identity tokens (from Business Profile; fall back to the TSA reference values).
+$biz_name   = function_exists( 'tsa_biz' ) ? tsa_biz( 'name' ) : 'Tee Shirt Ali';
+$biz_domain = preg_replace( '#^www\.#', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ?: 'teeshirtali.com';
+$biz_state  = function_exists( 'tsa_biz' ) ? tsa_biz( 'state', 'Louisiana' ) : 'Louisiana';
 ?>
 
 <section class="tsa-ip-hero">
     <div class="tsa-ip-hero__inner">
         <div class="tsa-kicker tsa-kicker--pink">Legal</div>
         <h1>Terms of Service</h1>
-        <p class="tsa-ip-hero__sub">The terms that govern your use of teeshirtali.com and our products.</p>
+        <p class="tsa-ip-hero__sub">The terms that govern your use of <?php echo esc_html( $biz_domain ); ?> and our products.</p>
         <p class="tsa-ip-hero__meta">Last updated: <?php echo esc_html( date( 'F j, Y' ) ); ?></p>
     </div>
 </section>
@@ -23,7 +28,7 @@ get_header();
 <div class="tsa-ip-wrap tsa-ip-wrap--narrow">
     <div class="tsa-ip-prose">
 
-        <p>These Terms of Service ("Terms") govern your access to and use of teeshirtali.com (the "Site") and the products and services offered by Tee Shirt Ali ("we," "us," or "our"). By using the Site or placing an order, you agree to these Terms.</p>
+        <p>These Terms of Service ("Terms") govern your access to and use of <?php echo esc_html( $biz_domain ); ?> (the "Site") and the products and services offered by <?php echo esc_html( $biz_name ); ?> ("we," "us," or "our"). By using the Site or placing an order, you agree to these Terms.</p>
 
         <h2>Orders &amp; Acceptance</h2>
         <p>All orders are subject to acceptance and product availability. We reserve the right to refuse or cancel any order, including for pricing errors, suspected fraud, or content that violates these Terms. A confirmed order and approved proof are required before production begins.</p>
@@ -49,10 +54,10 @@ get_header();
         <p>School stores, team stores, and fundraisers may have specific order windows, minimums, and payout terms communicated at setup. Those program terms apply in addition to these Terms.</p>
 
         <h2>Limitation of Liability</h2>
-        <p>To the fullest extent permitted by law, Tee Shirt Ali is not liable for indirect, incidental, or consequential damages. Our total liability for any order is limited to the amount you paid for that order.</p>
+        <p>To the fullest extent permitted by law, <?php echo esc_html( $biz_name ); ?> is not liable for indirect, incidental, or consequential damages. Our total liability for any order is limited to the amount you paid for that order.</p>
 
         <h2>Governing Law</h2>
-        <p>These Terms are governed by the laws of the State of Louisiana, without regard to conflict-of-law principles.</p>
+        <p>These Terms are governed by the laws of the State of <?php echo esc_html( $biz_state ); ?>, without regard to conflict-of-law principles.</p>
 
         <h2>Changes to These Terms</h2>
         <p>We may update these Terms at any time. Continued use of the Site after changes constitutes acceptance of the revised Terms.</p>

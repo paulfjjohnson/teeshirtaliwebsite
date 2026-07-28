@@ -9,13 +9,17 @@
 defined( 'ABSPATH' ) || exit;
 
 get_header();
+
+// Identity tokens (from Business Profile; fall back to the TSA reference values).
+$biz_name = function_exists( 'tsa_biz' ) ? tsa_biz( 'name' ) : 'Tee Shirt Ali';
+$biz_loc  = function_exists( 'tsa_biz' ) ? tsa_biz( 'location', 'Baton Rouge, Louisiana' ) : 'Baton Rouge, Louisiana';
 ?>
 
 <section class="tsa-ip-hero">
     <div class="tsa-ip-hero__inner">
         <div class="tsa-kicker tsa-kicker--pink">Orders</div>
         <h1>Shipping Policy</h1>
-        <p class="tsa-ip-hero__sub">How and when your Tee Shirt Ali order gets to you.</p>
+        <p class="tsa-ip-hero__sub">How and when your <?php echo esc_html( $biz_name ); ?> order gets to you.</p>
         <p class="tsa-ip-hero__meta">Last updated: <?php echo esc_html( date( 'F j, Y' ) ); ?></p>
     </div>
 </section>
@@ -30,7 +34,7 @@ get_header();
         <p>Shipping is calculated at checkout based on weight, order size, and destination. We ship via major carriers (USPS, UPS, and FedEx). Rush and expedited options may be available for time-sensitive orders — <a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">contact us</a> before ordering if you have a hard deadline.</p>
 
         <h2>Local Pickup &amp; Delivery</h2>
-        <p>We're based in Baton Rouge, Louisiana. Local pickup and local delivery may be available for area customers, schools, and teams. Choose the local option at checkout where offered, or ask us to arrange it.</p>
+        <p>We're based in <?php echo esc_html( $biz_loc ); ?>. Local pickup and local delivery may be available for area customers, schools, and teams. Choose the local option at checkout where offered, or ask us to arrange it.</p>
 
         <h2>School Stores, Team Stores &amp; Fundraisers</h2>
         <p>Store and fundraiser orders are typically produced together after the order window closes. Depending on the program, items may be bulk-shipped to the organizer for distribution or shipped individually to each buyer. The chosen method is communicated when the store is set up.</p>

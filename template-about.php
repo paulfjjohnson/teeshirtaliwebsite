@@ -14,6 +14,10 @@ get_header();
 
 $ico = function ( $k ) { return function_exists( 'tsa_mega_icon' ) ? tsa_mega_icon( $k ) : ''; };
 
+// Identity tokens (from Business Profile; fall back to the TSA reference values).
+$biz_name = function_exists( 'tsa_biz' ) ? tsa_biz( 'name' ) : 'Tee Shirt Ali';
+$biz_city = function_exists( 'tsa_biz' ) ? tsa_biz( 'city', 'Baton Rouge' ) : 'Baton Rouge';
+
 $values = [
     [ 'heart',     'Community First',     'We started in Baton Rouge to help local schools, teams, and businesses look good and rally their people. Your community is the point.' ],
     [ 'pen',       'Design-Driven',       'From a rough idea to print-ready art, our design-first flow means every order starts with something worth wearing.' ],
@@ -35,7 +39,7 @@ $stats = [
     <div class="tsa-ip-hero__inner">
         <div class="tsa-kicker tsa-kicker--pink">Our Story</div>
         <h1>Custom Apparel.<br>School Spirit. Local Heart.</h1>
-        <p class="tsa-ip-hero__sub">Tee Shirt Ali is a Baton Rouge custom-apparel and DTF-printing studio built to give schools, teams, businesses, and communities a better, easier way to make merch people actually want to wear.</p>
+        <p class="tsa-ip-hero__sub"><?php echo esc_html( $biz_name ); ?> is a <?php echo esc_html( $biz_city ); ?> custom-apparel and DTF-printing studio built to give schools, teams, businesses, and communities a better, easier way to make merch people actually want to wear.</p>
     </div>
 </section>
 
@@ -49,7 +53,7 @@ $stats = [
         </div>
         <div class="tsa-about-story__body">
             <p>We're a local team that lives and works in Ascension Parish. We saw schools and groups struggling with clunky order forms, big minimums, and inventory risk — so we built a platform that fixes all of it.</p>
-            <p>Today, Tee Shirt Ali powers dedicated online stores for schools, teams, and businesses, an exclusive design configurator, a growing design library, and limited-time Tee Party drops — all backed by in-house DTF printing and a design team that treats your art like it matters.</p>
+            <p>Today, <?php echo esc_html( $biz_name ); ?> powers dedicated online stores for schools, teams, and businesses, an exclusive design configurator, a growing design library, and limited-time Tee Party drops — all backed by in-house DTF printing and a design team that treats your art like it matters.</p>
             <p>No upfront cost. No inventory to manage. Just great-looking gear, fast turnaround, and people who pick up the phone.</p>
         </div>
     </div>
