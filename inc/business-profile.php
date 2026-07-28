@@ -57,6 +57,30 @@ function tsa_biz( string $key, string $default = '' ): string {
 	}
 }
 
+/**
+ * Persist profile fields from a POST-like array (used by the provisioning
+ * wizard so onboarding is one screen). Merges — only provided keys change —
+ * and adopts name/email from the provisioning fields when the profile lacks them.
+ */
+function tsa_business_profile_ingest( array $src ): void {
+	$profile = get_option( 'tsa_business_profile', [] );
+	$profile = is_array( $profile ) ? $profile : [];
+
+	foreach ( [ 'legal_name', 'tagline', 'phone', 'city', 'state', 'service_area', 'hours' ] as $k ) {
+		if ( isset( $src[ $k ] ) ) { $profile[ $k ] = sanitize_text_field( wp_unslash( $src[ $k ] ) ); }
+	}
+	foreach ( [ 'instagram', 'facebook', 'tiktok', 'x', 'youtube' ] as $k ) {
+		if ( isset( $src[ $k ] ) ) { $profile[ $k ] = esc_url_raw( wp_unslash( $src[ $k ] ) ); }
+	}
+	if ( empty( $profile['display_name'] ) && ! empty( $src['biz_name'] ) ) {
+		$profile['display_name'] = sanitize_text_field( wp_unslash( $src['biz_name'] ) );
+	}
+	if ( empty( $profile['email'] ) && ! empty( $src['contact_email'] ) ) {
+		$profile['email'] = sanitize_email( wp_unslash( $src['contact_email'] ) );
+	}
+	update_option( 'tsa_business_profile', $profile );
+}
+
 /* ─── Keep in sync with provisioning: adopt the business name on provision. ── */
 add_action( 'tsa_platform_event', function ( $type, $data ) {
 	if ( 'tenant.provisioned' !== $type ) { return; }

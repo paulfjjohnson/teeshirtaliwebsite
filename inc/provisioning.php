@@ -401,9 +401,26 @@ function tsa_prov_wizard_page(): void {
 			'shipping'      => ! empty( $_POST['shipping'] ) ? 1 : 0,
 			'contact_email' => sanitize_email( wp_unslash( $_POST['contact_email'] ?? '' ) ),
 			'admin_email'   => sanitize_email( wp_unslash( $_POST['admin_email'] ?? '' ) ),
+			// Business Profile fields (persisted via tsa_business_profile_ingest on provision).
+			'legal_name'    => sanitize_text_field( wp_unslash( $_POST['legal_name'] ?? '' ) ),
+			'phone'         => sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ),
+			'city'          => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
+			'state'         => sanitize_text_field( wp_unslash( $_POST['state'] ?? '' ) ),
+			'service_area'  => sanitize_text_field( wp_unslash( $_POST['service_area'] ?? '' ) ),
+			'hours'         => sanitize_text_field( wp_unslash( $_POST['hours'] ?? '' ) ),
+			'instagram'     => esc_url_raw( wp_unslash( $_POST['instagram'] ?? '' ) ),
+			'facebook'      => esc_url_raw( wp_unslash( $_POST['facebook'] ?? '' ) ),
+			'tiktok'        => esc_url_raw( wp_unslash( $_POST['tiktok'] ?? '' ) ),
+			'x'             => esc_url_raw( wp_unslash( $_POST['x'] ?? '' ) ),
+			'youtube'       => esc_url_raw( wp_unslash( $_POST['youtube'] ?? '' ) ),
 		];
 		if ( $_POST['tsa_prov_action'] === 'provision' ) {
 			$result = tsa_provision_tenant( $a );
+			// Fold the Business Profile into the same intake — persist its fields.
+			// ($_POST passed raw; ingest wp_unslash()es each field itself.)
+			if ( function_exists( 'tsa_business_profile_ingest' ) ) {
+				tsa_business_profile_ingest( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification
+			}
 		} else {
 			$preview = true;
 		}
@@ -422,6 +439,11 @@ function tsa_prov_wizard_page(): void {
 	}
 
 	$val      = function ( $k, $d = '' ) use ( $a ) { return esc_attr( $a[ $k ] ?? $d ); };
+	// Business Profile prefill: submitted value → saved profile → default.
+	$bp       = function_exists( 'tsa_business_profile' ) ? tsa_business_profile() : [];
+	$bval     = function ( $k, $d = '' ) use ( $a, $bp ) {
+		return esc_attr( $a[ $k ] ?? ( $bp[ $k ] ?? $d ) );
+	};
 	$tiers    = tsa_tiers();
 	$types    = tsa_store_types();
 	$catalog  = tsa_feature_catalog();
@@ -487,6 +509,21 @@ function tsa_prov_wizard_page(): void {
 					<td><textarea name="pickups" id="pickups" rows="3" class="large-text"><?php echo esc_textarea( $a['pickups'] ?? '' ); ?></textarea>
 					<p class="description">One per line. <label style="margin-left:.5em"><input type="checkbox" name="shipping" value="1" <?php checked( ! empty( $a['shipping'] ) ); ?>> also offer shipping</label></p></td></tr>
 				<tr><th><label for="contact_email">Contact email</label></th><td><input name="contact_email" id="contact_email" type="email" class="regular-text" value="<?php echo $val( 'contact_email' ); ?>"></td></tr>
+
+				<tr><td colspan="2" style="padding-top:1.4em"><h2 style="margin:0 0 .2em">Business profile</h2><p class="description" style="margin:0">Used across the Contact page, footer &amp; policies. Fill in once here and the seeded site shows this customer's details.</p></td></tr>
+				<tr><th><label for="legal_name">Legal name</label></th><td><input name="legal_name" id="legal_name" type="text" class="regular-text" value="<?php echo $bval( 'legal_name' ); ?>"><p class="description">Full legal entity name (for policies/terms). Display name comes from the business name above.</p></td></tr>
+				<tr><th><label for="phone">Phone</label></th><td><input name="phone" id="phone" type="text" class="regular-text" value="<?php echo $bval( 'phone' ); ?>"></td></tr>
+				<tr><th>Location</th><td>City <input name="city" type="text" value="<?php echo $bval( 'city' ); ?>" style="width:180px"> &nbsp; State <input name="state" type="text" value="<?php echo $bval( 'state' ); ?>" style="width:90px"></td></tr>
+				<tr><th><label for="service_area">Service area</label></th><td><input name="service_area" id="service_area" type="text" class="regular-text" value="<?php echo $bval( 'service_area' ); ?>" placeholder="e.g. Serving Ascension Parish &amp; nationwide"></td></tr>
+				<tr><th><label for="hours">Hours</label></th><td><input name="hours" id="hours" type="text" class="regular-text" value="<?php echo $bval( 'hours' ); ?>" placeholder="e.g. Mon–Fri 9–5"></td></tr>
+				<tr><th>Social links</th><td>
+					<input name="instagram" type="url" value="<?php echo $bval( 'instagram' ); ?>" placeholder="Instagram URL" class="regular-text" style="margin-bottom:4px"><br>
+					<input name="facebook" type="url" value="<?php echo $bval( 'facebook' ); ?>" placeholder="Facebook URL" class="regular-text" style="margin-bottom:4px"><br>
+					<input name="tiktok" type="url" value="<?php echo $bval( 'tiktok' ); ?>" placeholder="TikTok URL" class="regular-text" style="margin-bottom:4px"><br>
+					<input name="x" type="url" value="<?php echo $bval( 'x' ); ?>" placeholder="X / Twitter URL" class="regular-text" style="margin-bottom:4px"><br>
+					<input name="youtube" type="url" value="<?php echo $bval( 'youtube' ); ?>" placeholder="YouTube URL" class="regular-text">
+					<p class="description">Only the links you set appear in the footer.</p></td></tr>
+
 				<tr><th>Status</th>
 					<td><?php $st = $a['status'] ?? 'coming-soon'; foreach ( [ 'live' => 'Live', 'coming-soon' => 'Coming soon', 'hidden' => 'Hidden' ] as $sv2 => $lbl ) : ?>
 						<label style="margin-right:1em"><input type="radio" name="status" value="<?php echo esc_attr( $sv2 ); ?>" <?php checked( $st, $sv2 ); ?>> <?php echo esc_html( $lbl ); ?></label>
