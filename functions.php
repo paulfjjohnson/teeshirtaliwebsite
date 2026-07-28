@@ -1325,6 +1325,7 @@ $tsa_includes = [
 	'inc/sms-alerts.php',
 	'inc/party-alerts.php',
 	'inc/bulk-email.php',
+	'inc/seed.php',
 	'inc/live-search.php',
 	'inc/order-tickets.php',
 ];
