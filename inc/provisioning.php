@@ -362,6 +362,65 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 		$r['ok'] ? WP_CLI::success( 'Deprovisioned.' ) : WP_CLI::error( 'Deprovision failed.', false );
 	} );
+
+	// wp tsa setup — one command: seed core pages → provision tenant → business profile.
+	// Chains the whole customer stand-up. Add --skip-seed to provision an already-seeded site.
+	WP_CLI::add_command( 'tsa setup', function ( $args, $assoc ) {
+		// 1. Seed the core pages (unless the site is already seeded).
+		if ( ! isset( $assoc['skip-seed'] ) && function_exists( 'tsa_seed_site' ) ) {
+			WP_CLI::log( '== Seeding core pages ==' );
+			$s = tsa_seed_site();
+			foreach ( $s['steps'] as $line )  { WP_CLI::log( '  - ' . $line ); }
+			foreach ( $s['errors'] as $line ) { WP_CLI::warning( $line ); }
+			WP_CLI::log( sprintf( '  %d created, %d updated.', count( $s['created'] ), count( $s['updated'] ) ) );
+		}
+
+		// 2. Provision the tenant (tier + entitlements + first store).
+		WP_CLI::log( '== Provisioning tenant ==' );
+		$answers = [
+			'business_name' => $assoc['name'] ?? '',
+			'slug'          => $assoc['slug'] ?? '',
+			'store_type'    => $assoc['type'] ?? 'school',
+			'tier'          => $assoc['tier'] ?? 'pro',
+			'mascot'        => $assoc['mascot'] ?? '',
+			'level'         => $assoc['level'] ?? 'High Schools',
+			'status'        => $assoc['status'] ?? 'coming-soon',
+			'primary'       => $assoc['primary'] ?? '',
+			'secondary'     => $assoc['secondary'] ?? '',
+			'tagline'       => $assoc['tagline'] ?? '',
+			'contact_email' => $assoc['email'] ?? '',
+			'admin_email'   => $assoc['admin_email'] ?? '',
+		];
+		$r = tsa_provision_tenant( $answers );
+		foreach ( $r['steps'] as $line )  { WP_CLI::log( '  - ' . $line ); }
+		foreach ( $r['errors'] as $line ) { WP_CLI::warning( $line ); }
+
+		// 3. Persist the business profile (identity shown on Contact/footer/policies).
+		if ( function_exists( 'tsa_business_profile_ingest' ) ) {
+			tsa_business_profile_ingest( [
+				'biz_name'      => $assoc['name'] ?? '',
+				'contact_email' => $assoc['email'] ?? '',
+				'legal_name'    => $assoc['legal-name'] ?? '',
+				'tagline'       => $assoc['tagline'] ?? '',
+				'phone'         => $assoc['phone'] ?? '',
+				'city'          => $assoc['city'] ?? '',
+				'state'         => $assoc['state'] ?? '',
+				'service_area'  => $assoc['service-area'] ?? '',
+				'hours'         => $assoc['hours'] ?? '',
+				'instagram'     => $assoc['instagram'] ?? '',
+				'facebook'      => $assoc['facebook'] ?? '',
+				'tiktok'        => $assoc['tiktok'] ?? '',
+				'x'             => $assoc['x'] ?? '',
+				'youtube'       => $assoc['youtube'] ?? '',
+			] );
+			WP_CLI::log( '  - Business profile saved.' );
+		}
+
+		WP_CLI::log( sprintf( 'Tenant: %s · tier %s · blog #%d · %s',
+			$r['slug'] ?: '(none)', $r['tier'] ?: '(none)', $r['blog_id'], $r['verb'] ?: '—' ) );
+		$r['ok'] ? WP_CLI::success( 'Setup complete. Next: branding, SMTP, form-email routing, then purge cache.' )
+		         : WP_CLI::error( 'Setup finished with errors (see above).', false );
+	} );
 }
 
 /* ─────────────────────────────────────────────────────────────────

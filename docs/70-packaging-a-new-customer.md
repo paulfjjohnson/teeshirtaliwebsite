@@ -21,6 +21,30 @@ and one wizard screen.
 4. Post-launch checklist (domain, cache, email, branding)
 ```
 
+## CLI quickstart (one command)
+
+Once the site + theme are in place, `wp tsa setup` chains **seed → provision →
+business profile** in a single call:
+
+```bash
+# If you cloned a blueprint, clear its demo store first:
+wp tsa deprovision --slug=<demo-store-slug> --purge-store
+
+# Stand the tenant up (seeds pages, applies tier, stamps first store, saves profile):
+wp tsa setup \
+  --name="New Co" --slug=newco --type=school --tier=pro \
+  --primary="#123456" --secondary="#cccccc" \
+  --email="owner@newco.com" --tagline="Custom apparel for New Co" \
+  --phone="(555) 123-4567" --city="Austin" --state="Texas" \
+  --service-area="Serving Central Texas & nationwide" --hours="Mon–Fri 9–5" \
+  --instagram="https://instagram.com/newco"
+
+# Add --skip-seed if the site was already seeded (re-running provision only).
+```
+
+Then finish in the admin: **Branding** (logo/colors), **SMTP**, **Form Emails**,
+point the domain + SSL, and **purge cache**. Individual steps are detailed below.
+
 ---
 
 ## 1 · Stand up the site
