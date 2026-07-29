@@ -271,6 +271,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	} );
 }
 
+/* ─── Command Center card ──────────────────────────────────────────── */
+add_filter( 'tsa_admin_hub_tools', function ( $groups ) {
+	$card = [ 'Seed Core Pages', 'Create/repair the site\'s core pages', '🌱', admin_url( 'admin.php?page=tsa-seed' ) ];
+	if ( isset( $groups['Settings'] ) && is_array( $groups['Settings'] ) ) { $groups['Settings'][] = $card; }
+	else { $groups['Settings'] = [ $card ]; }
+	return $groups;
+} );
+
 /* ─── Platform admin button (for hosts without WP-CLI) ─────────────── */
 add_action( 'admin_menu', function () {
 	add_submenu_page(

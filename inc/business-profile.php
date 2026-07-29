@@ -95,6 +95,14 @@ add_action( 'tsa_platform_event', function ( $type, $data ) {
 	}
 }, 10, 2 );
 
+/* ─── Command Center card ──────────────────────────────────────────── */
+add_filter( 'tsa_admin_hub_tools', function ( $groups ) {
+	$card = [ 'Business Profile', 'Name, contact, location & socials', '🏷️', admin_url( 'admin.php?page=tsa-business-profile' ) ];
+	if ( isset( $groups['Settings'] ) && is_array( $groups['Settings'] ) ) { $groups['Settings'][] = $card; }
+	else { $groups['Settings'] = [ $card ]; }
+	return $groups;
+} );
+
 /* ─── Admin: Platform → Business Profile ───────────────────────────── */
 add_action( 'admin_menu', function () {
 	add_submenu_page(
