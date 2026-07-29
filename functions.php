@@ -1352,6 +1352,7 @@ $tsa_includes = [
 	'inc/help-center.php',
 	'inc/requests.php',
 	'inc/wholesale-orders.php',
+	'inc/apparel-search.php',
 	'inc/sms-alerts.php',
 	'inc/party-alerts.php',
 	'inc/bulk-email.php',
