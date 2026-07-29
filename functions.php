@@ -295,6 +295,35 @@ add_action( 'woocommerce_checkout_create_order_line_item', function ( $line, $ke
     }
 }, 10, 3 );
 
+/* The address orders are emailed from. Filterable so a packaged tenant can set
+   its own (defaults to the TSA orders mailbox). */
+function tsa_orders_email() {
+    return sanitize_email( apply_filters( 'tsa_orders_email', 'orders@teeshirtali.com' ) );
+}
+
+/* Checkout notice: tell customers a confirmation email follows when their order
+   is completed, and from which address (so it isn't mistaken for spam). Shown
+   just above the Place Order button. */
+add_action( 'woocommerce_review_order_before_submit', 'tsa_checkout_completion_notice', 20 );
+function tsa_checkout_completion_notice() {
+    $email = tsa_orders_email();
+    ?>
+    <div class="tsa-checkout-notice" role="note">
+        <span class="tsa-checkout-notice__icon" aria-hidden="true">✉️</span>
+        <p class="tsa-checkout-notice__text">
+            You'll receive an email confirmation once your order is completed, sent from
+            <a href="mailto:<?php echo esc_attr( $email ); ?>"><?php echo esc_html( $email ); ?></a>.
+            Please add it to your contacts so it doesn't land in spam.
+        </p>
+    </div>
+    <style>
+        .tsa-checkout-notice{display:flex;gap:10px;align-items:flex-start;margin:0 0 16px;padding:12px 14px;border:1px solid rgba(216,168,95,.4);background:rgba(216,168,95,.08);border-radius:10px}
+        .tsa-checkout-notice__icon{font-size:16px;line-height:1.5;flex:none}
+        .tsa-checkout-notice__text{margin:0;font-size:13px;line-height:1.5;color:#4a4248}
+    </style>
+    <?php
+}
+
 /* ═══════════════════════════════════════════════════════
    4. BODY CLASSES
 ═══════════════════════════════════════════════════════ */
