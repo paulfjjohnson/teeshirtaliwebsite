@@ -81,7 +81,7 @@ tsa_store_chrome_header( $ctx );
 					$href  = add_query_arg( 'program', $pslug, $hub_url );
 				?>
 				<a class="tsa-prog-card" href="<?php echo esc_url( $href ); ?>">
-					<div class="tsa-prog-card__visual">
+					<div class="tsa-prog-card__visual tsa-autocontrast">
 						<?php if ( ! empty( $pr['image'] ) ) : ?>
 						<img src="<?php echo esc_url( $pr['image'] ); ?>" alt="<?php echo esc_attr( $pr['name'] ); ?>" loading="lazy"/>
 						<?php else : ?>
