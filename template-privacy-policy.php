@@ -9,13 +9,17 @@
 defined( 'ABSPATH' ) || exit;
 
 get_header();
+
+// Identity tokens (from Business Profile; fall back to the TSA reference values).
+$biz_name   = function_exists( 'tsa_biz' ) ? tsa_biz( 'name' ) : 'Tee Shirt Ali';
+$biz_domain = preg_replace( '#^www\.#', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ?: 'teeshirtali.com';
 ?>
 
 <section class="tsa-ip-hero">
     <div class="tsa-ip-hero__inner">
         <div class="tsa-kicker tsa-kicker--pink">Legal</div>
         <h1>Privacy Policy</h1>
-        <p class="tsa-ip-hero__sub">How Tee Shirt Ali collects, uses, and protects your information.</p>
+        <p class="tsa-ip-hero__sub">How <?php echo esc_html( $biz_name ); ?> collects, uses, and protects your information.</p>
         <p class="tsa-ip-hero__meta">Last updated: <?php echo esc_html( date( 'F j, Y' ) ); ?></p>
     </div>
 </section>
@@ -23,7 +27,7 @@ get_header();
 <div class="tsa-ip-wrap tsa-ip-wrap--narrow">
     <div class="tsa-ip-prose">
 
-        <p>Tee Shirt Ali ("we," "us," or "our") operates teeshirtali.com (the "Site"). This Privacy Policy explains what information we collect, how we use it, and the choices you have. By using the Site or placing an order, you agree to the practices described here.</p>
+        <p><?php echo esc_html( $biz_name ); ?> ("we," "us," or "our") operates <?php echo esc_html( $biz_domain ); ?> (the "Site"). This Privacy Policy explains what information we collect, how we use it, and the choices you have. By using the Site or placing an order, you agree to the practices described here.</p>
 
         <h2>Information We Collect</h2>
         <p>We collect information you provide directly to us, including:</p>

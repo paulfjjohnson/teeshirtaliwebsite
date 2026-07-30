@@ -110,7 +110,7 @@ tsa_store_chrome_header( $ctx );
 				<?php foreach ( $live as $pr ) :
 					$count = (int) ( $pr['count'] ?? 0 ); ?>
 				<a class="tsa-prog-card" href="<?php echo esc_url( $prog_url( $pr ) ); ?>">
-					<div class="tsa-prog-card__visual">
+					<div class="tsa-prog-card__visual tsa-autocontrast">
 						<?php if ( ! empty( $pr['image'] ) ) : ?>
 						<img src="<?php echo esc_url( $pr['image'] ); ?>" alt="<?php echo esc_attr( $pr['name'] ); ?>" loading="lazy"/>
 						<?php else : ?>
