@@ -96,11 +96,13 @@
                         id: state.nextId++, file: file, imgEl: img,
                         pxW: img.naturalWidth, pxH: img.naturalHeight,
                         inW: defW, inH: 0, qty: 1, name: file.name.replace(/\.png$/i, ''),
+                        token: null, url: null, uploading: false, uploadErr: false,
                     };
                     item.inH = parseFloat((item.inW * (img.naturalHeight / img.naturalWidth)).toFixed(2));
                     state.items.push(item);
                     renderItemList();
                     autoPack();
+                    uploadItem(item); // ship the source PNG to the server so the order carries the art
                 };
                 img.src = e.target.result;
             };
@@ -168,6 +170,12 @@
 
             var dpiBadge = document.createElement('span'); dpiBadge.className = 'tsa-gsb-item__dpi ' + di.cls; dpiBadge.textContent = di.text; info.appendChild(dpiBadge);
 
+            var up = document.createElement('span'); up.className = 'tsa-gsb-item__upload'; up.style.fontSize = '11px'; up.style.marginLeft = '6px';
+            if (item.uploading) { up.textContent = 'uploading…'; up.style.color = '#b26a00'; }
+            else if (item.uploadErr) { up.textContent = 'upload failed — retry'; up.style.color = '#b3261e'; up.style.cursor = 'pointer'; up.title = 'Click to retry'; up.addEventListener('click', function () { uploadItem(item); }); }
+            else if (item.token) { up.textContent = 'ready ✓'; up.style.color = '#1a7f37'; }
+            info.appendChild(up);
+
             var qtyWrap = document.createElement('div'); qtyWrap.className = 'tsa-gsb-item__qty-wrap';
             var qtyBox = document.createElement('div'); qtyBox.className = 'tsa-gsb-item__qty';
             var btnMinus = document.createElement('button'); btnMinus.innerHTML = '−'; btnMinus.title = 'Decrease quantity';
@@ -178,7 +186,7 @@
             qtyBox.appendChild(btnMinus); qtyBox.appendChild(qtyVal); qtyBox.appendChild(btnPlus);
 
             var removeBtn = document.createElement('button'); removeBtn.className = 'tsa-gsb-item__remove'; removeBtn.innerHTML = '✕'; removeBtn.title = 'Remove design';
-            removeBtn.addEventListener('click', function () { state.items.splice(idx, 1); renderItemList(); autoPack(); });
+            removeBtn.addEventListener('click', function () { state.items.splice(idx, 1); renderItemList(); autoPack(); updateCartEnabled(); });
             qtyWrap.appendChild(qtyBox); qtyWrap.appendChild(removeBtn);
 
             card.appendChild(thumb); card.appendChild(info); card.appendChild(qtyWrap);
@@ -420,9 +428,35 @@
         if (!state.items.length) return;
         if (!confirm('Clear all designs from the sheet?')) return;
         state.items = []; state.packed = []; state.minLengthNeeded = 0;
-        renderItemList(); drawCanvas(); updateStats(); updatePrice();
+        renderItemList(); drawCanvas(); updateStats(); updatePrice(); updateCartEnabled();
         if ($cartMsg) $cartMsg.style.display = 'none';
     });
+
+    /* ── Progressive upload: send each PNG as it's added ── */
+    function uploadItem(item) {
+        item.uploading = true; item.uploadErr = false; item.token = null;
+        updateCartEnabled(); renderItemList();
+        var fd = new FormData();
+        fd.append('action', 'tsa_gsb_upload');
+        fd.append('nonce', cfg.nonce);
+        fd.append('file', item.file, item.file.name);
+        fetch(cfg.ajaxUrl, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && data.success && data.data && data.data.token) {
+                    item.token = data.data.token; item.url = data.data.url; item.uploadErr = false;
+                } else { item.uploadErr = true; }
+            })
+            .catch(function () { item.uploadErr = true; })
+            .finally(function () { item.uploading = false; renderItemList(); updateCartEnabled(); });
+    }
+    function anyUploading() { return state.items.some(function (i) { return i.uploading; }); }
+    function allUploaded() { return state.items.length > 0 && state.items.every(function (i) { return i.token && !i.uploading && !i.uploadErr; }); }
+    function updateCartEnabled() {
+        if (!$addToCartBtn) return;
+        $addToCartBtn.disabled = state.items.length > 0 && !allUploaded();
+        $addToCartBtn.textContent = anyUploading() ? 'Uploading…' : 'Add to cart →';
+    }
 
     /* ── Add to cart (server-calculated price) ── */
     function showCartMsg(type, text) {
@@ -435,6 +469,7 @@
             if (!state.items.length) { showCartMsg('error', 'Add at least one design before adding to cart.'); return; }
             if (state.minLengthNeeded > state.sheetLength) { showCartMsg('error', 'Your designs need at least ' + Math.ceil(state.minLengthNeeded / 10) * 10 + '″ of sheet. Please increase the length.'); return; }
             if (!cfg.productId) { showCartMsg('error', 'Product not configured. Please contact us to order.'); return; }
+            if (!allUploaded()) { showCartMsg('error', 'Please wait for all designs to finish uploading (retry any that failed).'); return; }
 
             $addToCartBtn.disabled = true; $addToCartBtn.textContent = 'Adding…';
             var fd = new FormData();
@@ -445,6 +480,11 @@
             fd.append('width', state.sheetWidth);
             fd.append('length', state.sheetLength);
             fd.append('quantity', 1);
+            state.items.forEach(function (i) { if (i.token) fd.append('tokens[]', i.token); });
+            fd.append('layout', JSON.stringify({
+                items: state.items.map(function (i) { return { name: i.name, inW: i.inW, inH: i.inH, qty: i.qty, dpi: (i.inW > 0 ? Math.round(i.pxW / i.inW) : 0) }; }),
+                placements: state.packed.map(function (p) { return { name: p.item.name, x: p.x, y: p.y, w: p.w, h: p.h, rotated: !!p.rotated }; })
+            }));
             fetch(cfg.ajaxUrl, { method: 'POST', body: fd })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
@@ -454,7 +494,7 @@
                     } else { showCartMsg('error', (data.data && data.data.message) || data.data || 'Could not add to cart. Please try again.'); }
                 })
                 .catch(function () { showCartMsg('error', 'Connection error. Please try again.'); })
-                .finally(function () { $addToCartBtn.disabled = false; $addToCartBtn.textContent = 'Add to cart →'; });
+                .finally(function () { updateCartEnabled(); });
         });
     }
 
@@ -462,6 +502,6 @@
     if ($widthSelect && $widthSelect.value) state.sheetWidth = parseFloat($widthSelect.value);
     setWidth(state.sheetWidth);
     setCanvasSize(state.sheetLength);
-    drawCanvas(); updateStats(); updatePrice();
+    drawCanvas(); updateStats(); updatePrice(); updateCartEnabled();
 
 }());
