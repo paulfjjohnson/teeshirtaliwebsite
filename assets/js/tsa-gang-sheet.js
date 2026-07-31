@@ -95,7 +95,7 @@
                     var item = {
                         id: state.nextId++, file: file, imgEl: img,
                         pxW: img.naturalWidth, pxH: img.naturalHeight,
-                        inW: defW, inH: 0, qty: 1, name: file.name.replace(/\.png$/i, ''),
+                        inW: defW, inH: 0, qty: 1, rot: 0, name: file.name.replace(/\.png$/i, ''),
                         token: null, url: null, uploading: false, uploadErr: false,
                     };
                     item.inH = parseFloat((item.inW * (img.naturalHeight / img.naturalWidth)).toFixed(2));
@@ -117,9 +117,17 @@
     $fileInput.addEventListener('change', function () { handleFiles($fileInput.files); $fileInput.value = ''; });
 
     /* ── Item list ── */
+    // Rotation-aware helpers: when an item is manually rotated, its printed
+    // width maps to the image's pixel HEIGHT (and the H/W aspect inverts).
+    function srcWpx(item)  { return item.rot ? item.pxH : item.pxW; }
+    function aspectH(item) { return item.rot ? (item.pxW / item.pxH) : (item.pxH / item.pxW); }
+
+    // Common DTF print presets (width in inches).
+    var SIZE_PRESETS = [ ['', 'Preset…'], ['3.5', 'Sleeve 3.5″'], ['4', 'Left chest 4″'], ['8', 'Youth 8″'], ['11', 'Adult 11″'], ['12', 'Full 12″'] ];
+
     function dpiInfo(item) {
         if (!item.inW || item.inW <= 0) return { dpi: null, cls: 'na', text: 'Set size' };
-        var dpi = Math.round(item.pxW / item.inW);
+        var dpi = Math.round(srcWpx(item) / item.inW);
         if (dpi >= 300) return { dpi: dpi, cls: 'ok', text: dpi + ' DPI ✓' };
         return { dpi: dpi, cls: 'warn', text: dpi + ' DPI ⚠' };
     }
@@ -156,7 +164,7 @@
                 var v = parseFloat(wInput.value); if (isNaN(v) || v <= 0) return;
                 if (v > state.sheetWidth) { v = state.sheetWidth; wInput.value = v; }
                 item.inW = v;
-                item.inH = parseFloat((v * (item.pxH / item.pxW)).toFixed(2));
+                item.inH = parseFloat((v * aspectH(item)).toFixed(2));
                 hInput.value = item.inH.toFixed(2);
                 updateDpiBadge(card, item); autoPack();
             });
@@ -165,7 +173,21 @@
                 item.inH = v; updateDpiBadge(card, item); autoPack();
             });
 
-            dims.appendChild(wLabel); dims.appendChild(wInput); dims.appendChild(sep); dims.appendChild(hInput); dims.appendChild(unit);
+            var presetSel = document.createElement('select');
+            presetSel.className = 'tsa-gsb-item__preset';
+            presetSel.title = 'Quick print size';
+            presetSel.style.cssText = 'margin-left:6px;font-size:11px;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:2px 4px;background:#fff';
+            SIZE_PRESETS.forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; presetSel.appendChild(op); });
+            presetSel.addEventListener('change', function () {
+                var v = parseFloat(presetSel.value); presetSel.value = '';
+                if (isNaN(v) || v <= 0) return;
+                if (v > state.sheetWidth) v = state.sheetWidth;
+                item.inW = v; item.inH = parseFloat((v * aspectH(item)).toFixed(2));
+                wInput.value = item.inW.toFixed(2); hInput.value = item.inH.toFixed(2);
+                updateDpiBadge(card, item); autoPack();
+            });
+
+            dims.appendChild(wLabel); dims.appendChild(wInput); dims.appendChild(sep); dims.appendChild(hInput); dims.appendChild(unit); dims.appendChild(presetSel);
             info.appendChild(dims);
 
             var dpiBadge = document.createElement('span'); dpiBadge.className = 'tsa-gsb-item__dpi ' + di.cls; dpiBadge.textContent = di.text; info.appendChild(dpiBadge);
@@ -185,9 +207,19 @@
             btnPlus.addEventListener('click', function () { item.qty++; qtyVal.textContent = item.qty; autoPack(); });
             qtyBox.appendChild(btnMinus); qtyBox.appendChild(qtyVal); qtyBox.appendChild(btnPlus);
 
+            var rotBtn = document.createElement('button'); rotBtn.className = 'tsa-gsb-item__rotate'; rotBtn.innerHTML = '⟳'; rotBtn.title = 'Rotate 90°';
+            rotBtn.style.cssText = 'cursor:pointer;border:1px solid rgba(0,0,0,.15);border-radius:6px;background:#fff;width:26px;height:26px;font-size:14px;line-height:1';
+            if (item.rot) rotBtn.style.background = 'var(--gsb-accent,#d8a85f)';
+            rotBtn.addEventListener('click', function () {
+                var t = item.inW; item.inW = item.inH; item.inH = t;   // swap footprint
+                item.rot = item.rot ? 0 : 1;
+                if (item.inW > state.sheetWidth) { item.inW = state.sheetWidth; item.inH = parseFloat((item.inW * aspectH(item)).toFixed(2)); }
+                renderItemList(); autoPack();
+            });
+
             var removeBtn = document.createElement('button'); removeBtn.className = 'tsa-gsb-item__remove'; removeBtn.innerHTML = '✕'; removeBtn.title = 'Remove design';
             removeBtn.addEventListener('click', function () { state.items.splice(idx, 1); renderItemList(); autoPack(); updateCartEnabled(); });
-            qtyWrap.appendChild(qtyBox); qtyWrap.appendChild(removeBtn);
+            qtyWrap.appendChild(qtyBox); qtyWrap.appendChild(rotBtn); qtyWrap.appendChild(removeBtn);
 
             card.appendChild(thumb); card.appendChild(info); card.appendChild(qtyWrap);
             $itemList.appendChild(card);
@@ -206,6 +238,7 @@
         return rects;
     }
     function tryRotate(rect) {
+        if (rect.item && rect.item.rot) return rect; // user fixed this design's orientation
         if (!state.allowRotation) return rect;
         if (rect.h > rect.w && rect.h <= state.sheetWidth) return { item: rect.item, w: rect.h, h: rect.w, rotated: true };
         return rect;
@@ -278,12 +311,13 @@
             var pxx = Math.round(p.x * px), pyy = Math.round(p.y * px), pw = Math.round(p.w * px), ph = Math.round(p.h * px);
             var ckey = p.item.id; if (colorIdx[ckey] === undefined) colorIdx[ckey] = Object.keys(colorIdx).length % COLORS.length;
             ctx.fillStyle = COLORS[colorIdx[ckey]]; ctx.fillRect(pxx, pyy, pw, ph);
+            var turned = p.rotated || (p.item.rot ? true : false);
             ctx.save();
-            if (p.rotated) { ctx.translate(pxx + pw, pyy); ctx.rotate(Math.PI / 2); ctx.drawImage(p.item.imgEl, 0, 0, ph, pw); }
+            if (turned) { ctx.translate(pxx + pw, pyy); ctx.rotate(Math.PI / 2); ctx.drawImage(p.item.imgEl, 0, 0, ph, pw); }
             else { ctx.drawImage(p.item.imgEl, pxx, pyy, pw, ph); }
             ctx.restore();
             ctx.strokeStyle = 'rgba(37,33,36,.25)'; ctx.lineWidth = 1; ctx.strokeRect(pxx + .5, pyy + .5, pw - 1, ph - 1);
-            if (p.rotated) { ctx.fillStyle = 'rgba(37,33,36,.6)'; ctx.fillRect(pxx, pyy, 16, 16); ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.fillText('↻', pxx + 3, pyy + 11); }
+            if (turned) { ctx.fillStyle = 'rgba(37,33,36,.6)'; ctx.fillRect(pxx, pyy, 16, 16); ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.fillText('↻', pxx + 3, pyy + 11); }
             ctx.fillStyle = 'rgba(37,33,36,.7)'; ctx.fillRect(pxx, pyy + ph - 16, pw, 16);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
             ctx.fillText(truncate(p.item.name, Math.floor(pw / 6)), pxx + pw / 2, pyy + ph - 4); ctx.textAlign = 'left';
@@ -409,7 +443,7 @@
         computePx();
         // Clamp any item wider than the new roll.
         state.items.forEach(function (item) {
-            if (item.inW > state.sheetWidth) { item.inW = state.sheetWidth; item.inH = parseFloat((item.inW * (item.pxH / item.pxW)).toFixed(2)); }
+            if (item.inW > state.sheetWidth) { item.inW = state.sheetWidth; item.inH = parseFloat((item.inW * aspectH(item)).toFixed(2)); }
         });
         if ($topbarNote) $topbarNote.textContent = fmtW(state.sheetWidth) + '″ roll · PNG · 300 DPI min';
         buildLengthOptions();
@@ -482,7 +516,7 @@
             fd.append('quantity', 1);
             state.items.forEach(function (i) { if (i.token) fd.append('tokens[]', i.token); });
             fd.append('layout', JSON.stringify({
-                items: state.items.map(function (i) { return { name: i.name, inW: i.inW, inH: i.inH, qty: i.qty, dpi: (i.inW > 0 ? Math.round(i.pxW / i.inW) : 0) }; }),
+                items: state.items.map(function (i) { return { name: i.name, inW: i.inW, inH: i.inH, qty: i.qty, rot: i.rot ? 1 : 0, dpi: (i.inW > 0 ? Math.round(srcWpx(i) / i.inW) : 0) }; }),
                 placements: state.packed.map(function (p) { return { name: p.item.name, x: p.x, y: p.y, w: p.w, h: p.h, rotated: !!p.rotated }; })
             }));
             fetch(cfg.ajaxUrl, { method: 'POST', body: fd })
