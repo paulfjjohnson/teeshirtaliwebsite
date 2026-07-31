@@ -209,6 +209,112 @@ add_action( 'woocommerce_checkout_create_order_line_item', function ( $line, $ke
 	}
 }, 10, 3 );
 
+/* ═══════════════════════════════════════════════════════════════════
+   SAVE / REORDER — logged-in customers can save a build and reload it.
+   Stored in user meta _tsa_gsb_saved (newest first, capped).
+═══════════════════════════════════════════════════════════════════ */
+const TSA_GSB_SAVE_MAX = 40;
+
+function tsa_gsb_saved_get( $uid ) {
+	$a = get_user_meta( (int) $uid, '_tsa_gsb_saved', true );
+	return is_array( $a ) ? $a : [];
+}
+function tsa_gsb_saved_put( $uid, $list ) {
+	update_user_meta( (int) $uid, '_tsa_gsb_saved', array_slice( array_values( $list ), 0, TSA_GSB_SAVE_MAX ) );
+}
+/** Public-facing card summary for the list UI. */
+function tsa_gsb_saved_card( $e ) {
+	$items = (array) ( $e['items'] ?? [] );
+	$pieces = 0;
+	foreach ( $items as $it ) { $pieces += max( 1, (int) ( $it['qty'] ?? 1 ) ); }
+	return [
+		'id'      => (string) ( $e['id'] ?? '' ),
+		'name'    => (string) ( $e['name'] ?? 'Gang sheet' ),
+		'width'   => (float) ( $e['width'] ?? 0 ),
+		'length'  => (int) ( $e['length'] ?? 0 ),
+		'designs' => count( $items ),
+		'pieces'  => $pieces,
+		'thumb'   => esc_url_raw( $items[0]['url'] ?? '' ),
+		'created' => (string) ( $e['created'] ?? '' ),
+	];
+}
+
+/** Sanitize + validate the items posted for a save (drops any with a bad/expired token). */
+function tsa_gsb_clean_saved_items( $raw ) {
+	$in  = json_decode( (string) wp_unslash( $raw ), true );
+	$out = [];
+	foreach ( array_slice( (array) $in, 0, TSA_GSB_MAX_FILES ) as $it ) {
+		$token = sanitize_text_field( (string) ( $it['token'] ?? '' ) );
+		$r     = tsa_gsb_resolve_token( $token );
+		if ( ! $r ) { continue; } // only keep designs whose uploaded file still exists
+		$out[] = [
+			'name'  => sanitize_text_field( (string) ( $it['name'] ?? '' ) ),
+			'token' => $token,
+			'url'   => $r['url'],
+			'inW'   => round( (float) ( $it['inW'] ?? 0 ), 2 ),
+			'inH'   => round( (float) ( $it['inH'] ?? 0 ), 2 ),
+			'qty'   => max( 1, absint( $it['qty'] ?? 1 ) ),
+			'rot'   => ! empty( $it['rot'] ) ? 1 : 0,
+			'pxW'   => absint( $it['pxW'] ?? 0 ),
+			'pxH'   => absint( $it['pxH'] ?? 0 ),
+		];
+	}
+	return $out;
+}
+
+add_action( 'wp_ajax_tsa_gsb_save', function () {
+	if ( ! check_ajax_referer( 'tsa_gsb_nonce', 'nonce', false ) ) { wp_send_json_error( 'Invalid nonce.' ); }
+	if ( ! is_user_logged_in() ) { wp_send_json_error( [ 'message' => 'Please log in to save sheets.' ] ); }
+	$uid   = get_current_user_id();
+	$items = tsa_gsb_clean_saved_items( $_POST['items'] ?? '' );
+	if ( ! $items ) { wp_send_json_error( [ 'message' => 'Nothing to save — add designs (and let them finish uploading) first.' ] ); }
+	$entry = [
+		'id'      => 'gs_' . wp_generate_password( 10, false ),
+		'name'    => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ) ?: 'Gang sheet',
+		'width'   => (float) ( $_POST['width'] ?? 0 ),
+		'length'  => (int) ( $_POST['length'] ?? 0 ),
+		'items'   => $items,
+		'created' => current_time( 'mysql' ),
+	];
+	$saved = tsa_gsb_saved_get( $uid );
+	array_unshift( $saved, $entry );
+	tsa_gsb_saved_put( $uid, $saved );
+	wp_send_json_success( [ 'sheets' => array_map( 'tsa_gsb_saved_card', tsa_gsb_saved_get( $uid ) ) ] );
+} );
+
+add_action( 'wp_ajax_tsa_gsb_list', function () {
+	if ( ! check_ajax_referer( 'tsa_gsb_nonce', 'nonce', false ) ) { wp_send_json_error( 'Invalid nonce.' ); }
+	if ( ! is_user_logged_in() ) { wp_send_json_error( 'Not logged in.' ); }
+	wp_send_json_success( [ 'sheets' => array_map( 'tsa_gsb_saved_card', tsa_gsb_saved_get( get_current_user_id() ) ) ] );
+} );
+
+add_action( 'wp_ajax_tsa_gsb_get', function () {
+	if ( ! check_ajax_referer( 'tsa_gsb_nonce', 'nonce', false ) ) { wp_send_json_error( 'Invalid nonce.' ); }
+	if ( ! is_user_logged_in() ) { wp_send_json_error( 'Not logged in.' ); }
+	$id = sanitize_text_field( wp_unslash( $_POST['id'] ?? '' ) );
+	foreach ( tsa_gsb_saved_get( get_current_user_id() ) as $e ) {
+		if ( ( $e['id'] ?? '' ) === $id ) {
+			// Re-verify each design's file still exists; drop any that don't.
+			$items = [];
+			foreach ( (array) ( $e['items'] ?? [] ) as $it ) {
+				if ( tsa_gsb_resolve_token( $it['token'] ?? '' ) ) { $items[] = $it; }
+			}
+			wp_send_json_success( [ 'sheet' => [ 'width' => (float) $e['width'], 'length' => (int) $e['length'], 'items' => $items ] ] );
+		}
+	}
+	wp_send_json_error( [ 'message' => 'That saved sheet was not found.' ] );
+} );
+
+add_action( 'wp_ajax_tsa_gsb_delete', function () {
+	if ( ! check_ajax_referer( 'tsa_gsb_nonce', 'nonce', false ) ) { wp_send_json_error( 'Invalid nonce.' ); }
+	if ( ! is_user_logged_in() ) { wp_send_json_error( 'Not logged in.' ); }
+	$uid = get_current_user_id();
+	$id  = sanitize_text_field( wp_unslash( $_POST['id'] ?? '' ) );
+	$saved = array_values( array_filter( tsa_gsb_saved_get( $uid ), function ( $e ) use ( $id ) { return ( $e['id'] ?? '' ) !== $id; } ) );
+	tsa_gsb_saved_put( $uid, $saved );
+	wp_send_json_success( [ 'sheets' => array_map( 'tsa_gsb_saved_card', $saved ) ] );
+} );
+
 /* ─── Admin order screen: show the production files + layout ────────── */
 add_action( 'woocommerce_after_order_itemmeta', function ( $item_id, $item ) {
 	if ( ! is_a( $item, 'WC_Order_Item_Product' ) ) { return; }

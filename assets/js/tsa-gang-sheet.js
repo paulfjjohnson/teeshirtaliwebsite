@@ -71,6 +71,8 @@
     var $dpiWarn      = document.getElementById('gsb-dpi-warn');
     var $topbarNote   = document.getElementById('gsb-topbar-note');
     var $pricingGrid  = document.getElementById('gsb-pricing-grid');
+    var $saveBtn      = document.getElementById('gsb-save-btn');
+    var $savedList    = document.getElementById('gsb-saved-list');
 
     if (!$canvas) return;
     var ctx = $canvas.getContext('2d');
@@ -532,10 +534,78 @@
         });
     }
 
+    /* ── Save / reorder (logged-in customers) ── */
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function gsbApi(action, extra) {
+        var fd = new FormData();
+        fd.append('action', action); fd.append('nonce', cfg.nonce);
+        if (extra) Object.keys(extra).forEach(function (k) { fd.append(k, extra[k]); });
+        return fetch(cfg.ajaxUrl, { method: 'POST', body: fd }).then(function (r) { return r.json(); });
+    }
+    function renderSaved(sheets) {
+        if (!$savedList) return;
+        $savedList.innerHTML = '';
+        if (!sheets || !sheets.length) {
+            var e = document.createElement('span'); e.style.cssText = 'font-size:12px;color:#777'; e.textContent = 'No saved sheets yet — build one and hit Save sheet.'; $savedList.appendChild(e); return;
+        }
+        sheets.forEach(function (s) {
+            var card = document.createElement('div');
+            card.style.cssText = 'display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.12);border-radius:8px;padding:6px 8px;background:#fff';
+            card.innerHTML = (s.thumb ? '<img src="' + s.thumb + '" alt="" style="width:34px;height:34px;object-fit:contain;border-radius:4px;background:#fafafa" />' : '') +
+                '<div style="font-size:12px;line-height:1.3"><strong>' + escapeHtml(s.name) + '</strong><br>' +
+                fmtW(s.width) + '″ · ' + s.designs + ' design' + (s.designs === 1 ? '' : 's') + ' · ' + s.pieces + ' pc</div>';
+            var load = document.createElement('button'); load.className = 'tsa-gsb-btn tsa-gsb-btn--outline tsa-gsb-btn--sm'; load.textContent = 'Load';
+            load.addEventListener('click', function () { gsbLoad(s.id); });
+            var del = document.createElement('button'); del.textContent = '✕'; del.title = 'Delete saved sheet'; del.style.cssText = 'border:0;background:none;cursor:pointer;color:#b3261e;font-size:14px';
+            del.addEventListener('click', function () { if (confirm('Delete this saved sheet?')) gsbApi('tsa_gsb_delete', { id: s.id }).then(function (d) { if (d && d.success) renderSaved(d.data.sheets); }); });
+            card.appendChild(load); card.appendChild(del);
+            $savedList.appendChild(card);
+        });
+    }
+    function gsbRefreshSaved() { if (!cfg.loggedIn) return; gsbApi('tsa_gsb_list').then(function (d) { if (d && d.success) renderSaved(d.data.sheets); }); }
+    function gsbSave() {
+        if (!state.items.length) { showCartMsg('error', 'Add designs before saving.'); return; }
+        if (!allUploaded()) { showCartMsg('error', 'Please wait for uploads to finish before saving.'); return; }
+        var name = window.prompt('Name this sheet:', 'Gang sheet ' + new Date().toLocaleDateString());
+        if (name === null) return;
+        var items = state.items.map(function (i) { return { name: i.name, token: i.token, url: i.url, inW: i.inW, inH: i.inH, qty: i.qty, rot: i.rot ? 1 : 0, pxW: i.pxW, pxH: i.pxH }; });
+        gsbApi('tsa_gsb_save', { name: name, width: state.sheetWidth, length: state.sheetLength, items: JSON.stringify(items) })
+            .then(function (d) { if (d && d.success) { renderSaved(d.data.sheets); showCartMsg('success', 'Sheet saved.'); } else { showCartMsg('error', (d && d.data && d.data.message) || 'Could not save.'); } });
+    }
+    function gsbLoad(id) {
+        gsbApi('tsa_gsb_get', { id: id }).then(function (d) {
+            if (!d || !d.success || !d.data || !d.data.sheet) { showCartMsg('error', (d && d.data && d.data.message) || 'Could not load that sheet.'); return; }
+            var sheet = d.data.sheet;
+            if (!sheet.items || !sheet.items.length) { showCartMsg('error', 'That saved sheet has no usable designs (files may have expired).'); return; }
+            state.items = []; state.packed = []; renderItemList();
+            if (sheet.width) { if ($widthSelect) $widthSelect.value = sheet.width; setWidth(parseFloat(sheet.width)); }
+            var pending = sheet.items.length;
+            sheet.items.forEach(function (si) {
+                var img = new Image();
+                img.onload = finish; img.onerror = finish;
+                function finish() {
+                    if (img.naturalWidth) {
+                        state.items.push({ id: state.nextId++, file: null, imgEl: img, pxW: si.pxW || img.naturalWidth, pxH: si.pxH || img.naturalHeight, inW: parseFloat(si.inW) || 1, inH: parseFloat(si.inH) || 1, qty: parseInt(si.qty, 10) || 1, rot: si.rot ? 1 : 0, name: si.name || 'design', token: si.token, url: si.url, uploading: false, uploadErr: false });
+                    }
+                    if (--pending === 0) {
+                        renderItemList(); autoPack(); updateCartEnabled();
+                        var L = parseInt(sheet.length, 10) || state.sheetLength; if (L > state.maxLength) L = state.maxLength; if (L < 10) L = 10;
+                        if (L > state.sheetLength) { state.sheetLength = L; if ($lengthSelect) $lengthSelect.value = L; drawCanvas(); updateStats(); updatePrice(); }
+                        showCartMsg('success', 'Loaded — review and add to cart.');
+                        var b = document.getElementById('builder'); if (b) b.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+                img.src = si.url;
+            });
+        });
+    }
+    if ($saveBtn) $saveBtn.addEventListener('click', gsbSave);
+
     /* ── Init ── */
     if ($widthSelect && $widthSelect.value) state.sheetWidth = parseFloat($widthSelect.value);
     setWidth(state.sheetWidth);
     setCanvasSize(state.sheetLength);
     drawCanvas(); updateStats(); updatePrice(); updateCartEnabled();
+    gsbRefreshSaved();
 
 }());

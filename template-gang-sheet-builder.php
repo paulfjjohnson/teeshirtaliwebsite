@@ -41,6 +41,7 @@ if ( $gsb_on ) {
         'pageId'    => $page_id,
         'widths'    => array_values( $widths ),
         'currency'  => $cur,
+        'loggedIn'  => is_user_logged_in() ? 1 : 0,
     ] );
 }
 ?>
@@ -104,8 +105,28 @@ $gsb_email = is_string( $gsb_email ) ? $gsb_email : (string) get_option( 'admin_
                 <span class="tsa-gsb-topbar__note" id="gsb-topbar-note">PNG files · 300 DPI min</span>
             </div>
             <div class="tsa-gsb-topbar__right">
+                <?php if ( is_user_logged_in() ) : ?>
+                <button class="tsa-gsb-btn tsa-gsb-btn--ghost tsa-gsb-btn--sm" id="gsb-save-btn">Save sheet</button>
+                <?php endif; ?>
                 <button class="tsa-gsb-btn tsa-gsb-btn--ghost tsa-gsb-btn--sm" id="gsb-clear-all">Clear all</button>
                 <button class="tsa-gsb-btn tsa-gsb-btn--ghost tsa-gsb-btn--sm" id="gsb-auto-pack">Auto-pack</button>
+            </div>
+        </div>
+
+        <!-- Saved sheets (reorder) -->
+        <div class="tsa-gsb-saved" id="gsb-saved" style="margin:0 0 14px;padding:12px 14px;border:1px solid rgba(0,0,0,.08);border-radius:10px;background:rgba(0,0,0,.015)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+                <strong style="font-size:13px">Your saved sheets</strong>
+                <?php if ( ! is_user_logged_in() ) : ?>
+                <span style="font-size:12px;color:var(--tsa-muted,#777)"><a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>">Log in</a> to save &amp; reorder</span>
+                <?php endif; ?>
+            </div>
+            <div id="gsb-saved-list" style="display:flex;flex-wrap:wrap;gap:8px">
+                <?php if ( is_user_logged_in() ) : ?>
+                <span class="tsa-gsb-saved__empty" style="font-size:12px;color:var(--tsa-muted,#777)">No saved sheets yet — build one and hit <em>Save sheet</em>.</span>
+                <?php else : ?>
+                <span style="font-size:12px;color:var(--tsa-muted,#777)">Sign in to save your builds and reorder them any time.</span>
+                <?php endif; ?>
             </div>
         </div>
 

@@ -21,12 +21,17 @@ full-featured tool.
   - The **admin order screen shows thumbnails + download links + a layout
     summary** so production has the art and the arrangement.
 
+- **Size presets** per design (Sleeve 3.5″, Left chest 4″, Youth 8″, Adult 11″,
+  Full 12″) — a quick-set dropdown; height follows the aspect.
+- **Manual per-design rotate** (⟳) — swaps the footprint and turns the art 90°,
+  rotation-aware DPI + width edits, packer respects the fixed orientation.
+- **Save / reorder** — logged-in customers save a build (files + layout, in user
+  meta) and reload it from the builder to reorder. Save/list/get/delete AJAX;
+  saved sheets drop any design whose uploaded file no longer exists.
+
 ## Next (full-featured — prioritized)
 
 **High value**
-- [ ] **Save / reorder a sheet** (account-linked) — repeat DTF buyers reorder constantly.
-- [ ] **Size presets** per design (pocket 4″, left-chest 3.5″, full-back 11″, …).
-- [ ] **Manual per-design rotate** button (only auto-rotation exists today).
 - [ ] **Multi-sheet auto-split** when designs exceed the roll's max length.
 - [ ] **Server-side print-ready composite** (Imagick) — optional single flattened
       PNG/PDF at 300 DPI in addition to the source files, straight to the RIP.
