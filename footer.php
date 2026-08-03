@@ -55,12 +55,12 @@
             <h4 class="tsa-footer-heading">Services</h4>
             <ul class="tsa-footer-links">
                 <li><a href="<?php echo esc_url( home_url( '/dtf-printing/' ) ); ?>">DTF Printing</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/graphic-design/' ) ); ?>">Graphic Design</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/blank-apparel/' ) ); ?>">Blank Apparel</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/brand-catalog/' ) ); ?>">Brand Catalog</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/gang-sheet-builder/' ) ); ?>">Gang Sheet Builder</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/printing-capabilities/' ) ); ?>">Printing Capabilities</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/turnaround-times/' ) ); ?>">Turnaround Times</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-graphic-design.php', '/graphic-design/' ) ); ?>">Graphic Design</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-blank-apparel.php', '/blank-apparel/' ) ); ?>">Blank Apparel</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-brand-catalog.php', '/brand-catalog/' ) ); ?>">Brand Catalog</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-gang-sheet-builder.php', '/gang-sheet-builder/' ) ); ?>">Gang Sheet Builder</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-printing-capabilities.php', '/printing-capabilities/' ) ); ?>">Printing Capabilities</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-turnaround-times.php', '/turnaround-times/' ) ); ?>">Turnaround Times</a></li>
             </ul>
         </div>
 
@@ -68,13 +68,13 @@
         <div class="tsa-footer-col">
             <h4 class="tsa-footer-heading">Stores & Programs</h4>
             <ul class="tsa-footer-links">
-                <li><a href="<?php echo esc_url( home_url( '/schools/' ) ); ?>">School Stores</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/team-stores/' ) ); ?>">Team Stores</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/fundraisers/' ) ); ?>">Fundraisers</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/tee-party/' ) ); ?>">Tee Party Drops</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/request-a-tee-party/' ) ); ?>">Request a Tee Party</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/design-library/' ) ); ?>">Design Library</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/businesses/' ) ); ?>">Business Merch</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-school-directory.php', '/schools/' ) ); ?>">School Stores</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-team-directory.php', '/team-stores/' ) ); ?>">Team Stores</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-fundraiser.php', '/fundraisers/' ) ); ?>">Fundraisers</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-tee-party-hub.php', '/tee-party/' ) ); ?>">Tee Party Drops</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-tee-party-request.php', '/request-a-tee-party/' ) ); ?>">Request a Tee Party</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-design-library.php', '/design-library/' ) ); ?>">Design Library</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-business-directory.php', '/businesses/' ) ); ?>">Business Merch</a></li>
             </ul>
         </div>
 
@@ -82,12 +82,12 @@
         <div class="tsa-footer-col">
             <h4 class="tsa-footer-heading">Get Started</h4>
             <ul class="tsa-footer-links">
-                <li><a href="<?php echo esc_url( home_url( '/request-a-quote/' ) ); ?>">Request a Quote</a></li>
-                <li><a href="<?php echo esc_url( home_url( '/customer-portal/' ) ); ?>">Customer Portal</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-quote.php', '/request-a-quote/' ) ); ?>">Request a Quote</a></li>
+                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-customer-portal.php', '/customer-portal/' ) ); ?>">Customer Portal</a></li>
                 <li><a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">Shop</a></li>
             </ul>
             <div class="tsa-footer-cta">
-                <a href="<?php echo esc_url( home_url( '/request-a-quote/' ) ); ?>" class="tsa-footer-cta__btn">
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-quote.php', '/request-a-quote/' ) ); ?>" class="tsa-footer-cta__btn">
                     Get a Quote
                 </a>
             </div>
@@ -105,12 +105,12 @@
                 Built in Baton Rouge, LA.
             </p>
             <nav class="tsa-footer-bottom__nav" aria-label="Footer links">
-                <a href="<?php echo esc_url( home_url( '/about/' ) ); ?>">About</a>
-                <a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">Contact</a>
-                <a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>">Privacy Policy</a>
-                <a href="<?php echo esc_url( home_url( '/terms-of-service/' ) ); ?>">Terms of Service</a>
-                <a href="<?php echo esc_url( home_url( '/shipping-policy/' ) ); ?>">Shipping</a>
-                <a href="<?php echo esc_url( home_url( '/faq/' ) ); ?>">FAQ</a>
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-about.php', '/about/' ) ); ?>">About</a>
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-contact.php', '/contact/' ) ); ?>">Contact</a>
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-privacy-policy.php', '/privacy-policy/' ) ); ?>">Privacy Policy</a>
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-terms.php', '/terms-of-service/' ) ); ?>">Terms of Service</a>
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-shipping-policy.php', '/shipping-policy/' ) ); ?>">Shipping</a>
+                <a href="<?php echo esc_url( tsa_tpl_page_url( 'template-faq.php', '/faq/' ) ); ?>">FAQ</a>
             </nav>
         </div>
     </div>

@@ -207,6 +207,32 @@ function tsa_add_page_templates( $templates ) {
     return $templates;
 }
 
+/**
+ * Permalink of the published page assigned a given page template, resolved by
+ * TEMPLATE rather than a hardcoded slug — so nav/footer links never 404 when a
+ * page's slug differs (renames, or a different tenant). Falls back to
+ * home_url( $fallback ) when no page uses that template. Cached per request.
+ */
+function tsa_tpl_page_url( $template, $fallback = '/' ) {
+    static $map = null;
+    if ( null === $map ) {
+        $map = [];
+        $ids = get_posts( [
+            'post_type'     => 'page',
+            'post_status'   => 'publish',
+            'numberposts'   => -1,
+            'fields'        => 'ids',
+            'meta_key'      => '_wp_page_template',
+            'no_found_rows' => true,
+        ] );
+        foreach ( $ids as $id ) {
+            $t = get_post_meta( $id, '_wp_page_template', true );
+            if ( $t && ! isset( $map[ $t ] ) ) { $map[ $t ] = get_permalink( $id ); }
+        }
+    }
+    return isset( $map[ $template ] ) ? $map[ $template ] : home_url( $fallback );
+}
+
 /* ═══════════════════════════════════════════════════════
    GANG SHEET BUILDER — WOOCOMMERCE AJAX ADD TO CART
 ═══════════════════════════════════════════════════════ */
