@@ -69,6 +69,17 @@ if ( ! is_user_logged_in() ) :
 .tsa-gate__disabled{ color:var(--text-muted,#7a7480); font-size:14px; margin:0; }
 @media (max-width:760px){ .tsa-gate{ grid-template-columns:1fr; } }
 @media (prefers-reduced-motion:reduce){ .tsa-gate-page *{ animation:none!important; transition:none!important; } }
+
+/* WooCommerce lost/reset-password form, themed to match the gate */
+.tsa-gate__panel .woocommerce-form-row,.tsa-gate__panel .form-row{ margin:0 0 16px; }
+.tsa-gate__panel label{ display:block; font-size:13px; font-weight:700; margin:0 0 7px; color:var(--text-primary,#252124); }
+.tsa-gate__panel .woocommerce-Button,.tsa-gate__panel button.button,.tsa-gate__panel input[type=submit]{
+    display:inline-flex; align-items:center; justify-content:center; width:100%; padding:14px 20px; border:0;
+    border-radius:999px; background:var(--brand-rose,#d98789); color:#fff; font-size:15px; font-weight:800; letter-spacing:.2px;
+    cursor:pointer; transition:transform .15s ease, filter .15s ease; margin-top:4px; }
+.tsa-gate__panel .woocommerce-Button:hover,.tsa-gate__panel button.button:hover,.tsa-gate__panel input[type=submit]:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+.tsa-gate__panel .woocommerce-ResetPassword,.tsa-gate__panel .woocommerce-LostPassword{ margin:0; }
+.tsa-gate__panel > p:first-child{ margin:0 0 18px; font-size:14px; color:var(--text-muted,#7a7480); }
 </style>
 
 <?php
