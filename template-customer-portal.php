@@ -71,6 +71,33 @@ if ( ! is_user_logged_in() ) :
 @media (prefers-reduced-motion:reduce){ .tsa-gate-page *{ animation:none!important; transition:none!important; } }
 </style>
 
+<?php
+/* ── Password reset (logged-out) ──────────────────────────────────────
+   This page IS the WooCommerce "My Account" page, so WooCommerce routes the
+   "Lost your password?" link and the emailed reset link here while the visitor
+   is logged out. Our custom sign-in gate below doesn't render account
+   endpoints, so without this the reset form never appears and the page just
+   reloads on submit. Let WooCommerce output + process its own lost/reset form. */
+if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'lost_password' ) ) : ?>
+<div class="tsa-gate-page">
+    <header class="tsa-gate-hero">
+        <div class="tsa-gate-hero__in">
+            <p class="tsa-gate-eyebrow">Customer Portal</p>
+            <h1>Reset your password</h1>
+            <p>Enter your details and we'll help you back into your studio.</p>
+        </div>
+    </header>
+    <div class="tsa-gate-notices"><?php if ( function_exists( 'wc_print_notices' ) ) wc_print_notices(); ?></div>
+    <div class="tsa-gate" style="grid-template-columns:1fr;max-width:520px">
+        <div class="tsa-gate__panel"><?php echo do_shortcode( '[woocommerce_my_account]' ); ?></div>
+    </div>
+</div>
+<?php
+    get_footer();
+    return;
+endif;
+?>
+
 <div class="tsa-gate-page">
     <header class="tsa-gate-hero">
         <div class="tsa-gate-hero__in">

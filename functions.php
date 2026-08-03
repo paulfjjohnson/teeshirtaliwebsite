@@ -1322,9 +1322,15 @@ add_action( 'template_redirect', function () {
     if ( is_admin() || ! function_exists( 'wc_get_page_id' ) ) return;
     $portal = get_page_by_path( 'customer-portal' );
     if ( ! $portal || (int) wc_get_page_id( 'myaccount' ) !== (int) $portal->ID ) return;
-    $path = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH );
+    $uri   = wp_unslash( $_SERVER['REQUEST_URI'] ?? '' );
+    $path  = wp_parse_url( $uri, PHP_URL_PATH );
+    $query = wp_parse_url( $uri, PHP_URL_QUERY );
     if ( $path && preg_match( '#^/my-account(/.*)?$#i', $path, $m ) ) {
-        wp_safe_redirect( home_url( '/customer-portal' . ( $m[1] ?? '/' ) ), 301 );
+        // Preserve the query string so password-reset links (?key=&login=),
+        // add-payment-method returns, etc. survive the redirect.
+        $target = home_url( '/customer-portal' . ( $m[1] ?? '/' ) );
+        if ( $query ) { $target .= '?' . $query; }
+        wp_safe_redirect( $target, 301 );
         exit;
     }
 } );
