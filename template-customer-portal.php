@@ -71,15 +71,27 @@ if ( ! is_user_logged_in() ) :
 @media (prefers-reduced-motion:reduce){ .tsa-gate-page *{ animation:none!important; transition:none!important; } }
 
 /* WooCommerce lost/reset-password form, themed to match the gate */
-.tsa-gate__panel .woocommerce-form-row,.tsa-gate__panel .form-row{ margin:0 0 16px; }
-.tsa-gate__panel label{ display:block; font-size:13px; font-weight:700; margin:0 0 7px; color:var(--text-primary,#252124); }
+.tsa-gate__panel{ padding:34px 32px; }
+/* Stack every row full width — WooCommerce floats new/confirm password side by
+   side (form-row-first/last ~47%), which looks cramped in this panel. */
+.tsa-gate__panel .woocommerce-form-row,.tsa-gate__panel .form-row,
+.tsa-gate__panel .form-row-first,.tsa-gate__panel .form-row-last{
+    width:100%!important; float:none!important; margin:0 0 18px!important; padding:0!important; }
+.tsa-gate__panel .clear{ clear:both; }
+.tsa-gate__panel label{ display:block; font-size:13px; font-weight:700; margin:0 0 8px; color:var(--text-primary,#252124); }
+/* Full-width, comfortable pill inputs (override Flatsome/WC defaults). */
+.tsa-gate__panel .input-text,.tsa-gate__panel input.woocommerce-Input,
+.tsa-gate__panel input[type=text],.tsa-gate__panel input[type=email],.tsa-gate__panel input[type=password]{
+    width:100%!important; padding:14px 18px!important; font-size:15px!important; line-height:1.3!important;
+    height:auto!important; border-radius:14px!important; border:1px solid var(--border-strong,rgba(37,33,36,.22))!important;
+    background:#fff!important; box-shadow:none!important; margin:0!important; box-sizing:border-box!important; }
 .tsa-gate__panel .woocommerce-Button,.tsa-gate__panel button.button,.tsa-gate__panel input[type=submit]{
-    display:inline-flex; align-items:center; justify-content:center; width:100%; padding:14px 20px; border:0;
+    display:inline-flex; align-items:center; justify-content:center; width:100%; padding:15px 22px; border:0;
     border-radius:999px; background:var(--brand-rose,#d98789); color:#fff; font-size:15px; font-weight:800; letter-spacing:.2px;
-    cursor:pointer; transition:transform .15s ease, filter .15s ease; margin-top:4px; }
+    cursor:pointer; transition:transform .15s ease, filter .15s ease; margin-top:6px; }
 .tsa-gate__panel .woocommerce-Button:hover,.tsa-gate__panel button.button:hover,.tsa-gate__panel input[type=submit]:hover{ filter:brightness(1.05); transform:translateY(-1px); }
 .tsa-gate__panel .woocommerce-ResetPassword,.tsa-gate__panel .woocommerce-LostPassword{ margin:0; }
-.tsa-gate__panel > p:first-child{ margin:0 0 18px; font-size:14px; color:var(--text-muted,#7a7480); }
+.tsa-gate__panel > p:first-child{ margin:0 0 20px; font-size:14.5px; line-height:1.55; color:var(--text-muted,#7a7480); }
 </style>
 
 <?php
