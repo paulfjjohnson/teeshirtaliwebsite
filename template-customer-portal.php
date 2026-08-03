@@ -89,7 +89,16 @@ if ( ! is_user_logged_in() ) :
    is logged out. Our custom sign-in gate below doesn't render account
    endpoints, so without this the reset form never appears and the page just
    reloads on submit. Let WooCommerce output + process its own lost/reset form. */
-if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'lost_password' ) ) : ?>
+$tsa_is_lost = ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'lost_password' ) );
+if ( ! $tsa_is_lost ) {
+    // Endpoint detection can fail on a custom account slug (e.g. rewrite rules
+    // not flushed), so also match the URL / reset params directly.
+    $tsa_req     = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+    $tsa_is_lost = ( false !== strpos( $tsa_req, 'lost-password' ) )
+        || isset( $_GET['show-reset-form'] ) || isset( $_GET['reset-link-sent'] )
+        || ( isset( $_GET['action'] ) && 'lostpassword' === $_GET['action'] );
+}
+if ( $tsa_is_lost ) : ?>
 <div class="tsa-gate-page">
     <header class="tsa-gate-hero">
         <div class="tsa-gate-hero__in">
@@ -100,7 +109,16 @@ if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'lost_passwo
     </header>
     <div class="tsa-gate-notices"><?php if ( function_exists( 'wc_print_notices' ) ) wc_print_notices(); ?></div>
     <div class="tsa-gate" style="grid-template-columns:1fr;max-width:520px">
-        <div class="tsa-gate__panel"><?php echo do_shortcode( '[woocommerce_my_account]' ); ?></div>
+        <div class="tsa-gate__panel"><?php
+            // Render WooCommerce's lost/reset form directly — the [woocommerce_my_account]
+            // shortcode gates on the same endpoint flag that can be false here, so call the
+            // method directly to guarantee the form (not the login form) shows.
+            if ( class_exists( 'WC_Shortcode_My_Account' ) && method_exists( 'WC_Shortcode_My_Account', 'lost_password' ) ) {
+                WC_Shortcode_My_Account::lost_password();
+            } else {
+                echo do_shortcode( '[woocommerce_my_account]' );
+            }
+        ?></div>
     </div>
 </div>
 <?php
