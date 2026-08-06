@@ -56,7 +56,6 @@
             <ul class="tsa-footer-links">
                 <li><a href="<?php echo esc_url( home_url( '/dtf-printing/' ) ); ?>">DTF Printing</a></li>
                 <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-graphic-design.php', '/graphic-design/' ) ); ?>">Graphic Design</a></li>
-                <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-blank-apparel.php', '/blank-apparel/' ) ); ?>">Shop Blanks</a></li>
                 <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-blank-apparel.php', '/blank-apparel/' ) ); ?>">Shop by Brand</a></li>
                 <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-gang-sheet-builder.php', '/gang-sheet-builder/' ) ); ?>">Gang Sheet Builder</a></li>
                 <li><a href="<?php echo esc_url( tsa_tpl_page_url( 'template-printing-capabilities.php', '/printing-capabilities/' ) ); ?>">Printing Capabilities</a></li>
