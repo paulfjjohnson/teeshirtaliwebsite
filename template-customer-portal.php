@@ -69,7 +69,75 @@ if ( ! is_user_logged_in() ) :
 .tsa-gate__disabled{ color:var(--text-muted,#7a7480); font-size:14px; margin:0; }
 @media (max-width:760px){ .tsa-gate{ grid-template-columns:1fr; } }
 @media (prefers-reduced-motion:reduce){ .tsa-gate-page *{ animation:none!important; transition:none!important; } }
+
+/* WooCommerce lost/reset-password form, themed to match the gate */
+.tsa-gate__panel{ padding:34px 32px; }
+/* Stack every row full width — WooCommerce floats new/confirm password side by
+   side (form-row-first/last ~47%), which looks cramped in this panel. */
+.tsa-gate__panel .woocommerce-form-row,.tsa-gate__panel .form-row,
+.tsa-gate__panel .form-row-first,.tsa-gate__panel .form-row-last{
+    width:100%!important; float:none!important; margin:0 0 18px!important; padding:0!important; }
+.tsa-gate__panel .clear{ clear:both; }
+.tsa-gate__panel label{ display:block; font-size:13px; font-weight:700; margin:0 0 8px; color:var(--text-primary,#252124); }
+/* Full-width, comfortable pill inputs (override Flatsome/WC defaults). */
+.tsa-gate__panel .input-text,.tsa-gate__panel input.woocommerce-Input,
+.tsa-gate__panel input[type=text],.tsa-gate__panel input[type=email],.tsa-gate__panel input[type=password]{
+    width:100%!important; padding:14px 18px!important; font-size:15px!important; line-height:1.3!important;
+    height:auto!important; border-radius:14px!important; border:1px solid var(--border-strong,rgba(37,33,36,.22))!important;
+    background:#fff!important; box-shadow:none!important; margin:0!important; box-sizing:border-box!important; }
+.tsa-gate__panel .woocommerce-Button,.tsa-gate__panel button.button,.tsa-gate__panel input[type=submit]{
+    display:inline-flex; align-items:center; justify-content:center; width:100%; padding:15px 22px; border:0;
+    border-radius:999px; background:var(--brand-rose,#d98789); color:#fff; font-size:15px; font-weight:800; letter-spacing:.2px;
+    cursor:pointer; transition:transform .15s ease, filter .15s ease; margin-top:6px; }
+.tsa-gate__panel .woocommerce-Button:hover,.tsa-gate__panel button.button:hover,.tsa-gate__panel input[type=submit]:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+.tsa-gate__panel .woocommerce-ResetPassword,.tsa-gate__panel .woocommerce-LostPassword{ margin:0; }
+.tsa-gate__panel > p:first-child{ margin:0 0 20px; font-size:14.5px; line-height:1.55; color:var(--text-muted,#7a7480); }
 </style>
+
+<?php
+/* ── Password reset (logged-out) ──────────────────────────────────────
+   This page IS the WooCommerce "My Account" page, so WooCommerce routes the
+   "Lost your password?" link and the emailed reset link here while the visitor
+   is logged out. Our custom sign-in gate below doesn't render account
+   endpoints, so without this the reset form never appears and the page just
+   reloads on submit. Let WooCommerce output + process its own lost/reset form. */
+$tsa_is_lost = ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'lost_password' ) );
+if ( ! $tsa_is_lost ) {
+    // Endpoint detection can fail on a custom account slug (e.g. rewrite rules
+    // not flushed), so also match the URL / reset params directly.
+    $tsa_req     = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+    $tsa_is_lost = ( false !== strpos( $tsa_req, 'lost-password' ) )
+        || isset( $_GET['show-reset-form'] ) || isset( $_GET['reset-link-sent'] )
+        || ( isset( $_GET['action'] ) && 'lostpassword' === $_GET['action'] );
+}
+if ( $tsa_is_lost ) : ?>
+<div class="tsa-gate-page">
+    <header class="tsa-gate-hero">
+        <div class="tsa-gate-hero__in">
+            <p class="tsa-gate-eyebrow">Customer Portal</p>
+            <h1>Reset your password</h1>
+            <p>Enter your details and we'll help you back into your studio.</p>
+        </div>
+    </header>
+    <div class="tsa-gate-notices"><?php if ( function_exists( 'wc_print_notices' ) ) wc_print_notices(); ?></div>
+    <div class="tsa-gate" style="grid-template-columns:1fr;max-width:520px">
+        <div class="tsa-gate__panel"><?php
+            // Render WooCommerce's lost/reset form directly — the [woocommerce_my_account]
+            // shortcode gates on the same endpoint flag that can be false here, so call the
+            // method directly to guarantee the form (not the login form) shows.
+            if ( class_exists( 'WC_Shortcode_My_Account' ) && method_exists( 'WC_Shortcode_My_Account', 'lost_password' ) ) {
+                WC_Shortcode_My_Account::lost_password();
+            } else {
+                echo do_shortcode( '[woocommerce_my_account]' );
+            }
+        ?></div>
+    </div>
+</div>
+<?php
+    get_footer();
+    return;
+endif;
+?>
 
 <div class="tsa-gate-page">
     <header class="tsa-gate-hero">

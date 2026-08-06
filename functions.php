@@ -207,6 +207,32 @@ function tsa_add_page_templates( $templates ) {
     return $templates;
 }
 
+/**
+ * Permalink of the published page assigned a given page template, resolved by
+ * TEMPLATE rather than a hardcoded slug — so nav/footer links never 404 when a
+ * page's slug differs (renames, or a different tenant). Falls back to
+ * home_url( $fallback ) when no page uses that template. Cached per request.
+ */
+function tsa_tpl_page_url( $template, $fallback = '/' ) {
+    static $map = null;
+    if ( null === $map ) {
+        $map = [];
+        $ids = get_posts( [
+            'post_type'     => 'page',
+            'post_status'   => 'publish',
+            'numberposts'   => -1,
+            'fields'        => 'ids',
+            'meta_key'      => '_wp_page_template',
+            'no_found_rows' => true,
+        ] );
+        foreach ( $ids as $id ) {
+            $t = get_post_meta( $id, '_wp_page_template', true );
+            if ( $t && ! isset( $map[ $t ] ) ) { $map[ $t ] = get_permalink( $id ); }
+        }
+    }
+    return isset( $map[ $template ] ) ? $map[ $template ] : home_url( $fallback );
+}
+
 /* ═══════════════════════════════════════════════════════
    GANG SHEET BUILDER — WOOCOMMERCE AJAX ADD TO CART
 ═══════════════════════════════════════════════════════ */
@@ -229,71 +255,9 @@ function tsa_gsb_widths( int $page_id ): array {
     return $out;
 }
 
-add_action( 'wp_ajax_tsa_gsb_add_to_cart',        'tsa_gsb_add_to_cart' );
-add_action( 'wp_ajax_nopriv_tsa_gsb_add_to_cart', 'tsa_gsb_add_to_cart' );
-function tsa_gsb_add_to_cart() {
-    if ( ! check_ajax_referer( 'tsa_gsb_nonce', 'nonce', false ) ) wp_send_json_error( 'Invalid nonce.' );
-    if ( function_exists( 'tsa_feature_active' ) && ! tsa_feature_active( 'gang_sheet' ) ) wp_send_json_error( 'Gang sheet builder is not available.' );
-
-    $product_id = (int) ( $_POST['product_id'] ?? 0 );
-    $page_id    = (int) ( $_POST['page_id']    ?? 0 );
-    $width      = (float) ( $_POST['width']    ?? 0 );
-    $length     = (int) ( $_POST['length']     ?? 0 );
-    $quantity   = max( 1, (int) ( $_POST['quantity'] ?? 1 ) );
-
-    if ( ! $product_id )               wp_send_json_error( 'Product not configured.' );
-    if ( $width <= 0 || $length <= 0 ) wp_send_json_error( 'Invalid sheet size.' );
-
-    // Price is computed SERVER-SIDE from the page's width config — never trust the client.
-    $rate = 0;
-    foreach ( tsa_gsb_widths( $page_id ) as $cfg ) {
-        if ( abs( $cfg['w'] - $width ) < 0.01 ) { $rate = $cfg['rate']; break; }
-    }
-    if ( $rate <= 0 ) wp_send_json_error( 'That sheet width is not available.' );
-    $price = round( $length * $rate, 2 );
-
-    $cart_item_data = [
-        'tsa_gang_sheet_width'  => $width,
-        'tsa_gang_sheet_length' => $length,
-        'tsa_gsb_price'         => $price,
-        'tsa_gsb_unique'        => md5( $width . '|' . $length . '|' . microtime( true ) ), // keep each build a distinct line
-    ];
-
-    $added = WC()->cart->add_to_cart( $product_id, $quantity, 0, [], $cart_item_data );
-    if ( $added ) {
-        wp_send_json_success( [
-            'message'   => 'Gang sheet added to cart.',
-            'cart_link' => '<a href="' . esc_url( wc_get_cart_url() ) . '">View cart →</a>',
-        ] );
-    }
-    wp_send_json_error( 'Could not add to cart. Please try again.' );
-}
-
-/* Apply the calculated gang-sheet price to its cart line. */
-add_action( 'woocommerce_before_calculate_totals', function ( $cart ) {
-    if ( is_admin() && ! wp_doing_ajax() ) return;
-    if ( ! ( $cart instanceof WC_Cart ) ) return;
-    foreach ( $cart->get_cart() as $item ) {
-        if ( ! empty( $item['tsa_gsb_price'] ) && ! empty( $item['data'] ) ) {
-            $item['data']->set_price( (float) $item['tsa_gsb_price'] );
-        }
-    }
-}, 20 );
-
-/* Show the sheet size in cart + checkout. */
-add_filter( 'woocommerce_get_item_data', function ( $data, $item ) {
-    if ( ! empty( $item['tsa_gang_sheet_width'] ) && ! empty( $item['tsa_gang_sheet_length'] ) ) {
-        $data[] = [ 'name' => 'Gang sheet', 'value' => $item['tsa_gang_sheet_width'] . '″ × ' . $item['tsa_gang_sheet_length'] . '″' ];
-    }
-    return $data;
-}, 10, 2 );
-
-/* Persist the sheet size onto the order line for production. */
-add_action( 'woocommerce_checkout_create_order_line_item', function ( $line, $key, $values ) {
-    if ( ! empty( $values['tsa_gang_sheet_width'] ) ) {
-        $line->add_meta_data( 'Gang Sheet Size', $values['tsa_gang_sheet_width'] . '″ × ' . ( $values['tsa_gang_sheet_length'] ?? '' ) . '″', true );
-    }
-}, 10, 3 );
+/* Gang-sheet add-to-cart, file-capture pipeline, cart/order display, and admin
+   production view now live in inc/gang-sheet.php (tsa_gsb_widths() stays here,
+   above, because the builder template reads it directly). */
 
 /* The address orders are emailed from. Filterable so a packaged tenant can set
    its own (defaults to the TSA orders mailbox). */
@@ -1353,6 +1317,7 @@ $tsa_includes = [
 	'inc/requests.php',
 	'inc/wholesale-orders.php',
 	'inc/apparel-search.php',
+	'inc/gang-sheet.php',
 	'inc/sms-alerts.php',
 	'inc/party-alerts.php',
 	'inc/bulk-email.php',
@@ -1383,9 +1348,15 @@ add_action( 'template_redirect', function () {
     if ( is_admin() || ! function_exists( 'wc_get_page_id' ) ) return;
     $portal = get_page_by_path( 'customer-portal' );
     if ( ! $portal || (int) wc_get_page_id( 'myaccount' ) !== (int) $portal->ID ) return;
-    $path = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH );
+    $uri   = wp_unslash( $_SERVER['REQUEST_URI'] ?? '' );
+    $path  = wp_parse_url( $uri, PHP_URL_PATH );
+    $query = wp_parse_url( $uri, PHP_URL_QUERY );
     if ( $path && preg_match( '#^/my-account(/.*)?$#i', $path, $m ) ) {
-        wp_safe_redirect( home_url( '/customer-portal' . ( $m[1] ?? '/' ) ), 301 );
+        // Preserve the query string so password-reset links (?key=&login=),
+        // add-payment-method returns, etc. survive the redirect.
+        $target = home_url( '/customer-portal' . ( $m[1] ?? '/' ) );
+        if ( $query ) { $target .= '?' . $query; }
+        wp_safe_redirect( $target, 301 );
         exit;
     }
 } );

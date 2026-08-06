@@ -71,6 +71,8 @@
     var $dpiWarn      = document.getElementById('gsb-dpi-warn');
     var $topbarNote   = document.getElementById('gsb-topbar-note');
     var $pricingGrid  = document.getElementById('gsb-pricing-grid');
+    var $saveBtn      = document.getElementById('gsb-save-btn');
+    var $savedList    = document.getElementById('gsb-saved-list');
 
     if (!$canvas) return;
     var ctx = $canvas.getContext('2d');
@@ -95,12 +97,14 @@
                     var item = {
                         id: state.nextId++, file: file, imgEl: img,
                         pxW: img.naturalWidth, pxH: img.naturalHeight,
-                        inW: defW, inH: 0, qty: 1, name: file.name.replace(/\.png$/i, ''),
+                        inW: defW, inH: 0, qty: 1, rot: 0, name: file.name.replace(/\.png$/i, ''),
+                        token: null, url: null, uploading: false, uploadErr: false,
                     };
                     item.inH = parseFloat((item.inW * (img.naturalHeight / img.naturalWidth)).toFixed(2));
                     state.items.push(item);
                     renderItemList();
                     autoPack();
+                    uploadItem(item); // ship the source PNG to the server so the order carries the art
                 };
                 img.src = e.target.result;
             };
@@ -115,9 +119,17 @@
     $fileInput.addEventListener('change', function () { handleFiles($fileInput.files); $fileInput.value = ''; });
 
     /* ── Item list ── */
+    // Rotation-aware helpers: when an item is manually rotated, its printed
+    // width maps to the image's pixel HEIGHT (and the H/W aspect inverts).
+    function srcWpx(item)  { return item.rot ? item.pxH : item.pxW; }
+    function aspectH(item) { return item.rot ? (item.pxW / item.pxH) : (item.pxH / item.pxW); }
+
+    // Common DTF print presets (width in inches).
+    var SIZE_PRESETS = [ ['', 'Preset…'], ['3.5', 'Sleeve 3.5″'], ['4', 'Left chest 4″'], ['8', 'Youth 8″'], ['11', 'Adult 11″'], ['12', 'Full 12″'] ];
+
     function dpiInfo(item) {
         if (!item.inW || item.inW <= 0) return { dpi: null, cls: 'na', text: 'Set size' };
-        var dpi = Math.round(item.pxW / item.inW);
+        var dpi = Math.round(srcWpx(item) / item.inW);
         if (dpi >= 300) return { dpi: dpi, cls: 'ok', text: dpi + ' DPI ✓' };
         return { dpi: dpi, cls: 'warn', text: dpi + ' DPI ⚠' };
     }
@@ -154,7 +166,7 @@
                 var v = parseFloat(wInput.value); if (isNaN(v) || v <= 0) return;
                 if (v > state.sheetWidth) { v = state.sheetWidth; wInput.value = v; }
                 item.inW = v;
-                item.inH = parseFloat((v * (item.pxH / item.pxW)).toFixed(2));
+                item.inH = parseFloat((v * aspectH(item)).toFixed(2));
                 hInput.value = item.inH.toFixed(2);
                 updateDpiBadge(card, item); autoPack();
             });
@@ -163,10 +175,30 @@
                 item.inH = v; updateDpiBadge(card, item); autoPack();
             });
 
-            dims.appendChild(wLabel); dims.appendChild(wInput); dims.appendChild(sep); dims.appendChild(hInput); dims.appendChild(unit);
+            var presetSel = document.createElement('select');
+            presetSel.className = 'tsa-gsb-item__preset';
+            presetSel.title = 'Quick print size';
+            presetSel.style.cssText = 'margin-left:6px;font-size:11px;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:2px 4px;background:#fff';
+            SIZE_PRESETS.forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; presetSel.appendChild(op); });
+            presetSel.addEventListener('change', function () {
+                var v = parseFloat(presetSel.value); presetSel.value = '';
+                if (isNaN(v) || v <= 0) return;
+                if (v > state.sheetWidth) v = state.sheetWidth;
+                item.inW = v; item.inH = parseFloat((v * aspectH(item)).toFixed(2));
+                wInput.value = item.inW.toFixed(2); hInput.value = item.inH.toFixed(2);
+                updateDpiBadge(card, item); autoPack();
+            });
+
+            dims.appendChild(wLabel); dims.appendChild(wInput); dims.appendChild(sep); dims.appendChild(hInput); dims.appendChild(unit); dims.appendChild(presetSel);
             info.appendChild(dims);
 
             var dpiBadge = document.createElement('span'); dpiBadge.className = 'tsa-gsb-item__dpi ' + di.cls; dpiBadge.textContent = di.text; info.appendChild(dpiBadge);
+
+            var up = document.createElement('span'); up.className = 'tsa-gsb-item__upload'; up.style.fontSize = '11px'; up.style.marginLeft = '6px';
+            if (item.uploading) { up.textContent = 'uploading…'; up.style.color = '#b26a00'; }
+            else if (item.uploadErr) { up.textContent = 'upload failed — retry'; up.style.color = '#b3261e'; up.style.cursor = 'pointer'; up.title = 'Click to retry'; up.addEventListener('click', function () { uploadItem(item); }); }
+            else if (item.token) { up.textContent = 'ready ✓'; up.style.color = '#1a7f37'; }
+            info.appendChild(up);
 
             var qtyWrap = document.createElement('div'); qtyWrap.className = 'tsa-gsb-item__qty-wrap';
             var qtyBox = document.createElement('div'); qtyBox.className = 'tsa-gsb-item__qty';
@@ -177,9 +209,19 @@
             btnPlus.addEventListener('click', function () { item.qty++; qtyVal.textContent = item.qty; autoPack(); });
             qtyBox.appendChild(btnMinus); qtyBox.appendChild(qtyVal); qtyBox.appendChild(btnPlus);
 
+            var rotBtn = document.createElement('button'); rotBtn.className = 'tsa-gsb-item__rotate'; rotBtn.innerHTML = '⟳'; rotBtn.title = 'Rotate 90°';
+            rotBtn.style.cssText = 'cursor:pointer;border:1px solid rgba(0,0,0,.15);border-radius:6px;background:#fff;width:26px;height:26px;font-size:14px;line-height:1';
+            if (item.rot) rotBtn.style.background = 'var(--gsb-accent,#d8a85f)';
+            rotBtn.addEventListener('click', function () {
+                var t = item.inW; item.inW = item.inH; item.inH = t;   // swap footprint
+                item.rot = item.rot ? 0 : 1;
+                if (item.inW > state.sheetWidth) { item.inW = state.sheetWidth; item.inH = parseFloat((item.inW * aspectH(item)).toFixed(2)); }
+                renderItemList(); autoPack();
+            });
+
             var removeBtn = document.createElement('button'); removeBtn.className = 'tsa-gsb-item__remove'; removeBtn.innerHTML = '✕'; removeBtn.title = 'Remove design';
-            removeBtn.addEventListener('click', function () { state.items.splice(idx, 1); renderItemList(); autoPack(); });
-            qtyWrap.appendChild(qtyBox); qtyWrap.appendChild(removeBtn);
+            removeBtn.addEventListener('click', function () { state.items.splice(idx, 1); renderItemList(); autoPack(); updateCartEnabled(); });
+            qtyWrap.appendChild(qtyBox); qtyWrap.appendChild(rotBtn); qtyWrap.appendChild(removeBtn);
 
             card.appendChild(thumb); card.appendChild(info); card.appendChild(qtyWrap);
             $itemList.appendChild(card);
@@ -198,6 +240,7 @@
         return rects;
     }
     function tryRotate(rect) {
+        if (rect.item && rect.item.rot) return rect; // user fixed this design's orientation
         if (!state.allowRotation) return rect;
         if (rect.h > rect.w && rect.h <= state.sheetWidth) return { item: rect.item, w: rect.h, h: rect.w, rotated: true };
         return rect;
@@ -270,12 +313,13 @@
             var pxx = Math.round(p.x * px), pyy = Math.round(p.y * px), pw = Math.round(p.w * px), ph = Math.round(p.h * px);
             var ckey = p.item.id; if (colorIdx[ckey] === undefined) colorIdx[ckey] = Object.keys(colorIdx).length % COLORS.length;
             ctx.fillStyle = COLORS[colorIdx[ckey]]; ctx.fillRect(pxx, pyy, pw, ph);
+            var turned = p.rotated || (p.item.rot ? true : false);
             ctx.save();
-            if (p.rotated) { ctx.translate(pxx + pw, pyy); ctx.rotate(Math.PI / 2); ctx.drawImage(p.item.imgEl, 0, 0, ph, pw); }
+            if (turned) { ctx.translate(pxx + pw, pyy); ctx.rotate(Math.PI / 2); ctx.drawImage(p.item.imgEl, 0, 0, ph, pw); }
             else { ctx.drawImage(p.item.imgEl, pxx, pyy, pw, ph); }
             ctx.restore();
             ctx.strokeStyle = 'rgba(37,33,36,.25)'; ctx.lineWidth = 1; ctx.strokeRect(pxx + .5, pyy + .5, pw - 1, ph - 1);
-            if (p.rotated) { ctx.fillStyle = 'rgba(37,33,36,.6)'; ctx.fillRect(pxx, pyy, 16, 16); ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.fillText('↻', pxx + 3, pyy + 11); }
+            if (turned) { ctx.fillStyle = 'rgba(37,33,36,.6)'; ctx.fillRect(pxx, pyy, 16, 16); ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.fillText('↻', pxx + 3, pyy + 11); }
             ctx.fillStyle = 'rgba(37,33,36,.7)'; ctx.fillRect(pxx, pyy + ph - 16, pw, 16);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
             ctx.fillText(truncate(p.item.name, Math.floor(pw / 6)), pxx + pw / 2, pyy + ph - 4); ctx.textAlign = 'left';
@@ -401,7 +445,7 @@
         computePx();
         // Clamp any item wider than the new roll.
         state.items.forEach(function (item) {
-            if (item.inW > state.sheetWidth) { item.inW = state.sheetWidth; item.inH = parseFloat((item.inW * (item.pxH / item.pxW)).toFixed(2)); }
+            if (item.inW > state.sheetWidth) { item.inW = state.sheetWidth; item.inH = parseFloat((item.inW * aspectH(item)).toFixed(2)); }
         });
         if ($topbarNote) $topbarNote.textContent = fmtW(state.sheetWidth) + '″ roll · PNG · 300 DPI min';
         buildLengthOptions();
@@ -420,9 +464,35 @@
         if (!state.items.length) return;
         if (!confirm('Clear all designs from the sheet?')) return;
         state.items = []; state.packed = []; state.minLengthNeeded = 0;
-        renderItemList(); drawCanvas(); updateStats(); updatePrice();
+        renderItemList(); drawCanvas(); updateStats(); updatePrice(); updateCartEnabled();
         if ($cartMsg) $cartMsg.style.display = 'none';
     });
+
+    /* ── Progressive upload: send each PNG as it's added ── */
+    function uploadItem(item) {
+        item.uploading = true; item.uploadErr = false; item.token = null;
+        updateCartEnabled(); renderItemList();
+        var fd = new FormData();
+        fd.append('action', 'tsa_gsb_upload');
+        fd.append('nonce', cfg.nonce);
+        fd.append('file', item.file, item.file.name);
+        fetch(cfg.ajaxUrl, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && data.success && data.data && data.data.token) {
+                    item.token = data.data.token; item.url = data.data.url; item.uploadErr = false;
+                } else { item.uploadErr = true; }
+            })
+            .catch(function () { item.uploadErr = true; })
+            .finally(function () { item.uploading = false; renderItemList(); updateCartEnabled(); });
+    }
+    function anyUploading() { return state.items.some(function (i) { return i.uploading; }); }
+    function allUploaded() { return state.items.length > 0 && state.items.every(function (i) { return i.token && !i.uploading && !i.uploadErr; }); }
+    function updateCartEnabled() {
+        if (!$addToCartBtn) return;
+        $addToCartBtn.disabled = state.items.length > 0 && !allUploaded();
+        $addToCartBtn.textContent = anyUploading() ? 'Uploading…' : 'Add to cart →';
+    }
 
     /* ── Add to cart (server-calculated price) ── */
     function showCartMsg(type, text) {
@@ -435,6 +505,7 @@
             if (!state.items.length) { showCartMsg('error', 'Add at least one design before adding to cart.'); return; }
             if (state.minLengthNeeded > state.sheetLength) { showCartMsg('error', 'Your designs need at least ' + Math.ceil(state.minLengthNeeded / 10) * 10 + '″ of sheet. Please increase the length.'); return; }
             if (!cfg.productId) { showCartMsg('error', 'Product not configured. Please contact us to order.'); return; }
+            if (!allUploaded()) { showCartMsg('error', 'Please wait for all designs to finish uploading (retry any that failed).'); return; }
 
             $addToCartBtn.disabled = true; $addToCartBtn.textContent = 'Adding…';
             var fd = new FormData();
@@ -445,6 +516,11 @@
             fd.append('width', state.sheetWidth);
             fd.append('length', state.sheetLength);
             fd.append('quantity', 1);
+            state.items.forEach(function (i) { if (i.token) fd.append('tokens[]', i.token); });
+            fd.append('layout', JSON.stringify({
+                items: state.items.map(function (i) { return { name: i.name, inW: i.inW, inH: i.inH, qty: i.qty, rot: i.rot ? 1 : 0, dpi: (i.inW > 0 ? Math.round(srcWpx(i) / i.inW) : 0) }; }),
+                placements: state.packed.map(function (p) { return { name: p.item.name, x: p.x, y: p.y, w: p.w, h: p.h, rotated: !!p.rotated }; })
+            }));
             fetch(cfg.ajaxUrl, { method: 'POST', body: fd })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
@@ -454,14 +530,82 @@
                     } else { showCartMsg('error', (data.data && data.data.message) || data.data || 'Could not add to cart. Please try again.'); }
                 })
                 .catch(function () { showCartMsg('error', 'Connection error. Please try again.'); })
-                .finally(function () { $addToCartBtn.disabled = false; $addToCartBtn.textContent = 'Add to cart →'; });
+                .finally(function () { updateCartEnabled(); });
         });
     }
+
+    /* ── Save / reorder (logged-in customers) ── */
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function gsbApi(action, extra) {
+        var fd = new FormData();
+        fd.append('action', action); fd.append('nonce', cfg.nonce);
+        if (extra) Object.keys(extra).forEach(function (k) { fd.append(k, extra[k]); });
+        return fetch(cfg.ajaxUrl, { method: 'POST', body: fd }).then(function (r) { return r.json(); });
+    }
+    function renderSaved(sheets) {
+        if (!$savedList) return;
+        $savedList.innerHTML = '';
+        if (!sheets || !sheets.length) {
+            var e = document.createElement('span'); e.style.cssText = 'font-size:12px;color:#777'; e.textContent = 'No saved sheets yet — build one and hit Save sheet.'; $savedList.appendChild(e); return;
+        }
+        sheets.forEach(function (s) {
+            var card = document.createElement('div');
+            card.style.cssText = 'display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.12);border-radius:8px;padding:6px 8px;background:#fff';
+            card.innerHTML = (s.thumb ? '<img src="' + s.thumb + '" alt="" style="width:34px;height:34px;object-fit:contain;border-radius:4px;background:#fafafa" />' : '') +
+                '<div style="font-size:12px;line-height:1.3"><strong>' + escapeHtml(s.name) + '</strong><br>' +
+                fmtW(s.width) + '″ · ' + s.designs + ' design' + (s.designs === 1 ? '' : 's') + ' · ' + s.pieces + ' pc</div>';
+            var load = document.createElement('button'); load.className = 'tsa-gsb-btn tsa-gsb-btn--outline tsa-gsb-btn--sm'; load.textContent = 'Load';
+            load.addEventListener('click', function () { gsbLoad(s.id); });
+            var del = document.createElement('button'); del.textContent = '✕'; del.title = 'Delete saved sheet'; del.style.cssText = 'border:0;background:none;cursor:pointer;color:#b3261e;font-size:14px';
+            del.addEventListener('click', function () { if (confirm('Delete this saved sheet?')) gsbApi('tsa_gsb_delete', { id: s.id }).then(function (d) { if (d && d.success) renderSaved(d.data.sheets); }); });
+            card.appendChild(load); card.appendChild(del);
+            $savedList.appendChild(card);
+        });
+    }
+    function gsbRefreshSaved() { if (!cfg.loggedIn) return; gsbApi('tsa_gsb_list').then(function (d) { if (d && d.success) renderSaved(d.data.sheets); }); }
+    function gsbSave() {
+        if (!state.items.length) { showCartMsg('error', 'Add designs before saving.'); return; }
+        if (!allUploaded()) { showCartMsg('error', 'Please wait for uploads to finish before saving.'); return; }
+        var name = window.prompt('Name this sheet:', 'Gang sheet ' + new Date().toLocaleDateString());
+        if (name === null) return;
+        var items = state.items.map(function (i) { return { name: i.name, token: i.token, url: i.url, inW: i.inW, inH: i.inH, qty: i.qty, rot: i.rot ? 1 : 0, pxW: i.pxW, pxH: i.pxH }; });
+        gsbApi('tsa_gsb_save', { name: name, width: state.sheetWidth, length: state.sheetLength, items: JSON.stringify(items) })
+            .then(function (d) { if (d && d.success) { renderSaved(d.data.sheets); showCartMsg('success', 'Sheet saved.'); } else { showCartMsg('error', (d && d.data && d.data.message) || 'Could not save.'); } });
+    }
+    function gsbLoad(id) {
+        gsbApi('tsa_gsb_get', { id: id }).then(function (d) {
+            if (!d || !d.success || !d.data || !d.data.sheet) { showCartMsg('error', (d && d.data && d.data.message) || 'Could not load that sheet.'); return; }
+            var sheet = d.data.sheet;
+            if (!sheet.items || !sheet.items.length) { showCartMsg('error', 'That saved sheet has no usable designs (files may have expired).'); return; }
+            state.items = []; state.packed = []; renderItemList();
+            if (sheet.width) { if ($widthSelect) $widthSelect.value = sheet.width; setWidth(parseFloat(sheet.width)); }
+            var pending = sheet.items.length;
+            sheet.items.forEach(function (si) {
+                var img = new Image();
+                img.onload = finish; img.onerror = finish;
+                function finish() {
+                    if (img.naturalWidth) {
+                        state.items.push({ id: state.nextId++, file: null, imgEl: img, pxW: si.pxW || img.naturalWidth, pxH: si.pxH || img.naturalHeight, inW: parseFloat(si.inW) || 1, inH: parseFloat(si.inH) || 1, qty: parseInt(si.qty, 10) || 1, rot: si.rot ? 1 : 0, name: si.name || 'design', token: si.token, url: si.url, uploading: false, uploadErr: false });
+                    }
+                    if (--pending === 0) {
+                        renderItemList(); autoPack(); updateCartEnabled();
+                        var L = parseInt(sheet.length, 10) || state.sheetLength; if (L > state.maxLength) L = state.maxLength; if (L < 10) L = 10;
+                        if (L > state.sheetLength) { state.sheetLength = L; if ($lengthSelect) $lengthSelect.value = L; drawCanvas(); updateStats(); updatePrice(); }
+                        showCartMsg('success', 'Loaded — review and add to cart.');
+                        var b = document.getElementById('builder'); if (b) b.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+                img.src = si.url;
+            });
+        });
+    }
+    if ($saveBtn) $saveBtn.addEventListener('click', gsbSave);
 
     /* ── Init ── */
     if ($widthSelect && $widthSelect.value) state.sheetWidth = parseFloat($widthSelect.value);
     setWidth(state.sheetWidth);
     setCanvasSize(state.sheetLength);
-    drawCanvas(); updateStats(); updatePrice();
+    drawCanvas(); updateStats(); updatePrice(); updateCartEnabled();
+    gsbRefreshSaved();
 
 }());
